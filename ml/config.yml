@@ -163,7 +163,7 @@ rules:
   # The five "Деньги без проверки" rules only react to VLM action observations; they are no-ops while vlm.enabled is false.
   enabled: [workstation_unlocked, valuables_left_unattended, safe_left_open, cash_room_door_open, unauthorized_entry, cash_exposed_to_visitor,
             personal_items_at_workplace, food_drink_at_workplace,
-            cash_not_machine_verified, no_client_identification, unrecounted_cash_to_safe, collector_handover_unverified, counting_not_in_client_presence]
+            cash_not_machine_verified, no_client_identification, unrecounted_cash_to_safe, counting_not_in_client_presence]  # collector_handover_unverified off: false positives on X-16/X-24
   door_state_trusted: true    # door_open comes from the few-shot door classifier (`door:` above), not from zero-shot detection
   seat_core_radius: 0.10      # timecode of an absence = last second the cashier was this close to the seat
   departure_lookback_sec: 6
