@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Sequence
 
 from pipeline.observers.base import Observation
 from pipeline.video import Frame
@@ -18,7 +19,7 @@ class StubObserver:
     def __init__(self, fixture: Path | None):
         self._observations = _load(fixture) if fixture else []
 
-    def observe(self, frames: list[Frame]) -> list[Observation]:
+    def observe(self, frames: list[Frame], prior: Sequence[Observation] = ()) -> list[Observation]:
         if not frames:
             return []
         last_ts = frames[-1].ts

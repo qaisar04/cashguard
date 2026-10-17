@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Sequence
 
 from app.settings import DetectorConfig
 from pipeline.detectors.base import Detector
@@ -28,7 +29,7 @@ class DetectorObserver:
         self.screen = screen
         self.person_verifier = person_verifier
 
-    def observe(self, frames: list[Frame]) -> list[Observation]:
+    def observe(self, frames: list[Frame], prior: Sequence[Observation] = ()) -> list[Observation]:
         images = [f.image for f in frames]
         per_frame: list[list] = [[] for _ in frames]
         for detector, cfg in self.detectors:

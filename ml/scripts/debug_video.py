@@ -42,7 +42,9 @@ def main() -> None:
     info, frames = sample_frames(args.video, cfg.video.fps, cfg.video.max_side)
     if args.max_frames:
         frames = frames[: args.max_frames]
-    observations = [o for observer in observers for o in observer.observe(frames)]
+    observations = []
+    for observer in observers:
+        observations.extend(observer.observe(frames, prior=tuple(observations)))
     aspect = info.width / info.height if info.height else 1.0
     analysis = Analyzer(cfg, observers, RuleCatalog.load()).analyze_observations(frames, observations, aspect)
 

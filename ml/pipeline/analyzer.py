@@ -87,7 +87,7 @@ class Analyzer:
             info, frames = sample_frames(video_path, fps, self.cfg.video.max_side)
             observations: list[Observation] = []
             for observer in self.observers:
-                observations.extend(observer.observe(frames))
+                observations.extend(observer.observe(frames, prior=tuple(observations)))
             aspect = info.width / info.height if info.height else 1.0
             analysis = self.analyze_observations(frames, observations, aspect)
         meta = AnalysisMeta(

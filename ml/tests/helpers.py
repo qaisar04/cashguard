@@ -8,7 +8,8 @@ from pipeline.tracking import Track
 from pipeline.zones import Zones
 
 ENABLED = ["workstation_unlocked", "valuables_left_unattended", "safe_left_open", "cash_room_door_open", "unauthorized_entry", "cash_exposed_to_visitor",
-           "personal_items_at_workplace", "food_drink_at_workplace"]
+           "personal_items_at_workplace", "food_drink_at_workplace",
+           "cash_not_machine_verified", "no_client_identification", "unrecounted_cash_to_safe", "collector_handover_unverified", "counting_not_in_client_presence"]
 SEAT = (0.5, 0.5)
 AWAY = (0.1, 0.1)
 COUNTER = (0.25, 0.40)   # far side of the desk: within desk_radius of the seat, outside cashier_radius
@@ -17,7 +18,9 @@ GLASS_POLY = [[0.0, 0.0], [0.15, 0.0], [0.15, 0.60], [0.0, 0.60]]
 
 
 def rules_cfg(**overrides) -> RulesConfig:
-    base = dict(enabled=ENABLED, door_state_trusted=True, unattended_sec=3, safe_open_sec=4, door_open_sec=4, personal_items_sec=4, food_drink_sec=4, min_presence_sec=3, merge_gap_sec=10, max_events=5)
+    base = dict(enabled=ENABLED, door_state_trusted=True, unattended_sec=3, safe_open_sec=4, door_open_sec=4, personal_items_sec=4, food_drink_sec=4,
+                min_presence_sec=3, merge_gap_sec=10, max_events=5,
+                machine_lookaround_sec=15, recount_lookback_sec=60, collector_leave_sec=12, client_gone_sec=3)
     base.update(overrides)
     return RulesConfig(**base)
 
@@ -35,10 +38,10 @@ def person(track_id: int, where, first_seen: float = 0.0, entered: bool | None =
 
 
 def state(t: float, persons=(), screen=SCREEN_UNKNOWN, cash=0, bags=0, safe_open=False, person_at_safe=False, door_open=False,
-          personal_items=0, drinks=0) -> SecondState:
+          personal_items=0, drinks=0, actions=()) -> SecondState:
     return SecondState(t=float(t), persons=list(persons), screen_state=screen, monitor_visible=True, cash_on_desk=cash,
                        bags_on_desk=bags, personal_items_on_desk=personal_items, drinks_on_desk=drinks, safe_open=safe_open, safe_center=(0.8, 0.5) if safe_open else None,
-                       person_at_safe=person_at_safe, door_open=door_open)
+                       person_at_safe=person_at_safe, door_open=door_open, actions=list(actions))
 
 
 def timeline(states: list[SecondState], tracks: list[Track] | None = None) -> Timeline:

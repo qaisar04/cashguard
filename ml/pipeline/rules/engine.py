@@ -5,11 +5,16 @@ import logging
 from app.settings import RulesConfig
 from pipeline.rules.base import Candidate, Rule
 from pipeline.rules.cash_exposed_to_visitor import CashExposedToVisitorRule
+from pipeline.rules.cash_not_machine_verified import CashNotMachineVerifiedRule
 from pipeline.rules.cash_room_door_open import CashRoomDoorOpenRule
 from pipeline.rules.food_drink_at_workplace import FoodDrinkAtWorkplaceRule
 from pipeline.rules.personal_items_at_workplace import PersonalItemsAtWorkplaceRule
+from pipeline.rules.collector_handover_unverified import CollectorHandoverUnverifiedRule
+from pipeline.rules.counting_not_in_client_presence import CountingNotInClientPresenceRule
+from pipeline.rules.no_client_identification import NoClientIdentificationRule
 from pipeline.rules.safe_left_open import SafeLeftOpenRule
 from pipeline.rules.unauthorized_entry import UnauthorizedEntryRule
+from pipeline.rules.unrecounted_cash_to_safe import UnrecountedCashToSafeRule
 from pipeline.rules.valuables_left_unattended import ValuablesLeftUnattendedRule
 from pipeline.rules.workstation_unlocked import WorkstationUnlockedRule
 from pipeline.timeline import Timeline
@@ -26,6 +31,11 @@ ALL_RULES: list[Rule] = [
     CashExposedToVisitorRule(),
     PersonalItemsAtWorkplaceRule(),
     FoodDrinkAtWorkplaceRule(),
+    CashNotMachineVerifiedRule(),
+    NoClientIdentificationRule(),
+    UnrecountedCashToSafeRule(),
+    CollectorHandoverUnverifiedRule(),
+    CountingNotInClientPresenceRule(),
 ]
 
 

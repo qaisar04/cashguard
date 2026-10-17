@@ -53,8 +53,24 @@ def build_observers(settings: Settings, cfg: PipelineConfig) -> list[Observer]:
 
         return [StubObserver(settings.stub_fixture)]
     if settings.observer == OBSERVER_DETECTOR:
-        return _build_detector_observers(cfg)
+        observers = _build_detector_observers(cfg)
+        if cfg.vlm.enabled:
+            vlm = _build_vlm_observer(cfg)
+            if vlm is not None:
+                observers.append(vlm)
+        return observers
     raise UnknownObserver(f"Unknown observer: {settings.observer}")
+
+
+def _build_vlm_observer(cfg: PipelineConfig) -> Observer | None:
+    from pipeline.observers.vlm import HfVlmBackend, VlmObserver
+
+    try:
+        backend = HfVlmBackend(cfg.vlm.model, cfg.vlm.device, cfg.vlm.max_new_tokens)
+    except OSError as e:
+        log.warning("vlm disabled: weights for %s are not available (%s)", cfg.vlm.model, e)
+        return None
+    return VlmObserver(cfg.vlm, cfg.zones, backend)
 
 
 def _build_detector_observers(cfg: PipelineConfig) -> list[Observer]:
