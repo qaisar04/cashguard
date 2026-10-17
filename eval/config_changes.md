@@ -1,3 +1,5 @@
 | # | when | change | reason | effect |
 |---|---|---|---|---|
 | 1 | 2026-10-17 17:05 | RT-DETR `group_thresholds.monitor: 0.45` (was the global 0.7) | X-22: after the cashier leaves, the tilted laptop scores 0.71–0.76 or is missed, so screen_state became `unknown` exactly when it matters; monitors have no "ghost" detections, so the person-oriented 0.7 is unnecessarily strict | X-22 (even) — to be judged on the odd half |
+| 2 | 2026-10-17 21:55 | RT-DETR `score_threshold` for persons 0.7 → 0.55 | X-43/44/45 framing: the seated cashier scores 0.70–0.75 and was detected 1 frame in 5 → "cashier absent" → false `valuables_left_unattended`; corridor ghosts (0.44–0.57) are now excluded by the glass/reflection geometry instead | X-43 (odd) — judge on the even half |
+| 3 | 2026-10-17 21:55 | `tracking._stays_behind_glass`: a track that was ever at the cashier seat is never "behind glass" | same clips: the auto-calibrated glass pane (x<0.33) covered the seat, so the cashier was dropped as `outside` | X-43 (odd) |

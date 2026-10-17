@@ -9,7 +9,7 @@ detectors:
     model: PekingU/rtdetr_r50vd_coco_o365
     device: auto            # auto | cpu | mps | cuda
     batch_size: 4
-    score_threshold: 0.7
+    score_threshold: 0.55         # a seated cashier seen from the front scores 0.70-0.75; corridor silhouettes (0.44-0.57) are removed by the glass geometry
     # Personal items / drinks score lower than people (handbag 0.44-0.66, cup 0.3-0.5 on the dataset;
     # the desk phone reaches 0.30 as "handbag"): per-group thresholds.
     group_thresholds:

@@ -1,0 +1,60 @@
+X-1: done 28s verdict=no_violation -
+X-2: done 76s verdict=no_violation -
+X-3: done 20s verdict=no_violation -
+X-4: done 84s verdict=violation cash_exposed_to_visitor@60.11
+X-5: done 70s verdict=no_violation -
+X-8: done 38s verdict=no_violation -
+X-10: done 18s verdict=no_violation -
+X-11: done 28s verdict=violation workstation_unlocked@18.07
+X-12: done 44s verdict=no_violation -
+X-13: done 106s verdict=no_violation -
+X-14: done 173s verdict=violation safe_left_open@117.08  SCHEMA: violation[0]: evidence ts 123.09 is >5.0s from 117.08
+X-15: done 120s verdict=violation valuables_left_unattended@16.05
+X-16: done 94s verdict=no_violation -
+X-17: done 16s verdict=no_violation -
+X-18: done 24s verdict=no_violation -
+X-19: done 58s verdict=no_violation -
+X-20: done 82s verdict=violation safe_left_open@5.0  SCHEMA: violation[0]: evidence ts 11.0 is >5.0s from 5.0
+X-21: done 58s verdict=no_violation -
+X-22: done 106s verdict=violation workstation_unlocked@14.07  SCHEMA: violation[0]: evidence ts 20.1 is >5.0s from 14.07
+X-23: timeout 670s verdict=None -
+X-24: timeout 460s verdict=None -
+X-25: timeout 2331s verdict=None -
+X-26: timeout 1376s verdict=None -
+X-27: timeout 1092s verdict=None -
+X-28: timeout 697s verdict=None -
+X-29: timeout 474s verdict=None -
+X-30: timeout 1043s verdict=None -
+X-31: timeout 509s verdict=None -
+X-32: timeout 1004s verdict=None -
+X-33: timeout 330s verdict=None -
+X-34: done 62s verdict=no_violation -
+X-35: done 62s verdict=no_violation -
+X-37: done 14s verdict=no_violation -
+X-38: done 70s verdict=violation cash_exposed_to_visitor@29.03; cash_exposed_to_visitor@55.06
+X-39: done 76s verdict=violation unauthorized_entry@35.04; unauthorized_entry@50.06
+X-40: done 38s verdict=violation personal_items_at_workplace@19.08
+X-43: done 78s verdict=violation valuables_left_unattended@19.05
+X-44: done 76s verdict=no_violation -
+X-45: done 56s verdict=no_violation -
+X-46: done 28s verdict=violation food_drink_at_workplace@10.03
+X-47: done 81s verdict=violation cash_exposed_to_visitor@60.11
+X-48: done 93s verdict=no_violation -
+
+| # | Criterion | Result | Detail |
+|---|---|---|---|
+| 1 | 42/42 done, 0 failed, 0 timeouts | FAIL | done 31/42; failed/timeout: X-23:timeout, X-24:timeout, X-25:timeout, X-26:timeout, X-27:timeout, X-28:timeout, X-29:timeout, X-30:timeout, X-31:timeout, X-32:timeout, X-33:timeout |
+| 2-4 | schema, JPEG, evidence ±5s, Russian description with clause | FAIL | X-14: violation[0]: evidence ts 123.09 is >5.0s from 117.08; X-20: violation[0]: evidence ts 11.0 is >5.0s from 5.0; X-22: violation[0]: evidence ts 20.1 is >5.0s from 14.07 |
+| 5 | 401 without / with wrong X-API-Key | PASS | no key=401, wrong key=401, wrong key GET=401 |
+| 6 | max processing ≤ 120s | FAIL | p50 77s, max 2331s (X-25), X-47 81s |
+| 7 | burst of 5 longest within 300s each | FAIL | X-14: done in 172s (ok); X-39: done in 235s (ok); X-4: done in 294s (ok); X-47: timeout in 331s (FAIL); X-5: timeout in 331s (FAIL) |
+| 8 | recall on implemented types ≥ 12/14 | FAIL | 3/4 (judged set), all: 9/16 |
+| 9 | clean FP ≤ 2, visitor-type FP = 0 | FAIL | FP: X-14, X-39, X-43; visitor-type: X-39 |
+| 10 | must-pass list | FAIL | missed: X-32; false: - |
+| 11 | timecode ≥70% within ±2s and ≥90% within ±5s | FAIL | ±2s 56%, ±5s 89% (all); judged: ±2s 67%, ±5s 67% |
+| 12 | type accuracy ≥ 80% | PASS | type 100%, family 100% (all); judged type 100% |
+| 13 | non-implemented violations listed | PASS | 6 listed below |
+| 14 | track diagnostics logged per video | FAIL | missing for: X-23, X-24, X-25, X-27, X-28, X-29, X-31, X-32 |
+| 15 | no confident mid-room track dropped on X-4/X-18/X-30 | PASS | ok |
+
+report -> ../eval/report.md
