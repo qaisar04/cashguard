@@ -27,6 +27,7 @@ class DetectorConfig(BaseModel):
     batch_size: int = Field(gt=0)
     score_threshold: float = Field(ge=0, le=1)
     group_thresholds: dict[str, float] = Field(default_factory=dict, description="per-group override of score_threshold")
+    frame_stride: int = Field(ge=1, default=1, description="run on every n-th sampled frame; detections are carried to the skipped frames")
     queries: dict[str, list[str]]
 
     @property
@@ -105,6 +106,8 @@ class PersonVerifierConfig(BaseModel):
 class RulesConfig(BaseModel):
     enabled: list[str] = Field(min_length=1)
     door_state_trusted: bool = False
+    seat_core_radius: float = Field(gt=0, default=0.10, description="within this distance of the seat the cashier is 'working'; leaving it marks the departure time")
+    departure_lookback_sec: float = Field(ge=0, default=6)
     unattended_sec: float = Field(ge=0)
     safe_open_sec: float = Field(ge=0)
     door_open_sec: float = Field(ge=0)

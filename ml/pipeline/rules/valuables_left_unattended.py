@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from app.settings import RulesConfig
-from pipeline.rules.base import Candidate, evidence_points, fmt
+from pipeline.rules.base import Candidate, departure_ts, evidence_points, fmt
 from pipeline.rules.workstation_unlocked import TYPE_ID as WORKSTATION_TYPE
 from pipeline.timeline import SecondState, Timeline
 
@@ -20,7 +20,7 @@ class ValuablesLeftUnattendedRule:
             if timeline.span_sec(run) < cfg.unattended_sec:
                 continue
             states = timeline.states[run[0] : run[1]]
-            onset, end = states[0].t, states[-1].t
+            onset, end = departure_ts(timeline, run[0], cfg), states[-1].t
             out.append(
                 Candidate(
                     type_id=TYPE_ID,

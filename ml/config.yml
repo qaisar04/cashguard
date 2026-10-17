@@ -9,7 +9,7 @@ detectors:
     model: PekingU/rtdetr_r50vd_coco_o365
     device: auto            # auto | cpu | mps | cuda
     batch_size: 4
-    score_threshold: 0.7
+    score_threshold: 0.55         # a seated cashier seen from the front scores 0.70-0.75; corridor silhouettes (0.44-0.57) are removed by the glass geometry
     # Personal items / drinks score lower than people (handbag 0.44-0.66, cup 0.3-0.5 on the dataset;
     # the desk phone reaches 0.30 as "handbag"): per-group thresholds.
     group_thresholds:
@@ -27,6 +27,7 @@ detectors:
     model: google/owlv2-base-patch16-ensemble
     device: auto
     batch_size: 4
+    frame_stride: 2           # OWLv2 is the slowest stage (~0.35 s/frame); its targets are static, so every 2nd second is enough
     score_threshold: 0.27
     group_thresholds:
       personal_item: 0.33   # a worn jacket scores up to 0.28, a handbag on the desk 0.35-0.46
@@ -126,6 +127,8 @@ tracking:
 rules:
   enabled: [workstation_unlocked, valuables_left_unattended, safe_left_open, cash_room_door_open, unauthorized_entry, cash_exposed_to_visitor, personal_items_at_workplace, food_drink_at_workplace]
   door_state_trusted: true    # door_open comes from the few-shot door classifier (`door:` above), not from zero-shot detection
+  seat_core_radius: 0.10      # timecode of an absence = last second the cashier was this close to the seat
+  departure_lookback_sec: 6
   unattended_sec: 3
   safe_open_sec: 4
   door_open_sec: 4

@@ -21,8 +21,8 @@ def test_workstation_unlocked_fires_when_cashier_leaves_with_application_open():
     states += [state(t, [], screen=SCREEN_APPLICATION) for t in range(5, 12)]
     found = WorkstationUnlockedRule().evaluate(timeline(states), rules_cfg())
     assert len(found) == 1
-    assert found[0].onset == 5.0
-    assert found[0].evidence_ts[0] == 5.0
+    assert found[0].onset == 4.0  # departure: last second at the seat core; absence itself starts at 5
+    assert found[0].evidence_ts[0] == 4.0
 
 
 def test_workstation_unlocked_ignores_lock_screen():
@@ -40,7 +40,7 @@ def test_workstation_unlocked_ignores_short_absence():
 def test_valuables_left_unattended_mentions_cash():
     states = [state(t, [CASHIER], cash=1) for t in range(0, 3)] + [state(t, [], cash=1) for t in range(3, 10)]
     found = ValuablesLeftUnattendedRule().evaluate(timeline(states), rules_cfg())
-    assert len(found) == 1 and found[0].onset == 3.0
+    assert len(found) == 1 and found[0].onset == 2.0  # departure second, absence starts at 3
     assert "наличные" in found[0].description
 
 

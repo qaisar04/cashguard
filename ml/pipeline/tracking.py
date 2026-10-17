@@ -178,7 +178,10 @@ def _stays_behind_glass(t: Track, zones: Zones, cfg: TrackingConfig) -> bool:
     A real visitor comes through the door and walks toward the desk; a track that materialises mid-room is a broken
     track of someone already inside, so only tracks confined to the glass strip are excluded.
     """
-    return all(zones.in_glass(c) or _near_edge(c, cfg.edge_margin) for c in (center(b) for _, b in t.points))
+    centers = [center(b) for _, b in t.points]
+    if any(zones.at_cashier_seat(c) for c in centers):
+        return False  # the cashier's seat is inside the room even when the glazing behind it covers that area
+    return all(zones.in_glass(c) or _near_edge(c, cfg.edge_margin) for c in centers)
 
 
 def _born_at_entrance(t: Track, zones: Zones, cfg: TrackingConfig) -> bool:
