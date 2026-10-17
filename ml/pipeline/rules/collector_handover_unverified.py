@@ -16,16 +16,24 @@ class CollectorHandoverUnverifiedRule:
 
     def evaluate(self, timeline: Timeline, cfg: RulesConfig) -> list[Candidate]:
         out: list[Candidate] = []
+        reported: set[int] = set()
         for run in timeline.runs(lambda s: s.bags_on_desk > 0):
             onset = timeline.states[run[0]].t
-            with_visitor = [s for s in timeline.states[run[0] : run[1]] if s.visitors]
-            if not with_visitor or with_visitor[0].t - onset > 1.0:
-                continue
-            left_at = _visitors_gone_at(timeline, run[0], cfg.client_gone_sec)
-            if left_at is None or left_at - onset > cfg.collector_leave_sec:
-                continue
-            checked = any(onset <= s.t <= left_at and (s.cash_on_desk or s.has_action(ACTION_MACHINE_COUNTING)) for s in timeline.states)
-            if checked:
+            # the collector is often detected only for a frame or two at the door: look around the bag's appearance
+            around = [s for s in timeline.states if abs(s.t - onset) <= cfg.collector_leave_sec]
+            collectors = {p.track_id for s in around for p in s.visitors if p.entered}
+            for track_id in collectors - reported:
+                presence = [s.t for s in timeline.states if any(p.track_id == track_id for p in s.visitors)]
+                first_seen, last_seen = min(presence), max(presence)
+                if last_seen - first_seen + 1.0 > cfg.collector_leave_sec:
+                    continue  # stayed for the document check / bag opening
+                left_at = last_seen + 1.0
+                checked = any(first_seen <= s.t <= left_at and (s.cash_on_desk or s.has_action(ACTION_MACHINE_COUNTING)) for s in timeline.states)
+                if checked:
+                    continue
+                reported.add(track_id)
+                break
+            else:
                 continue
             out.append(
                 Candidate(
@@ -41,13 +49,3 @@ class CollectorHandoverUnverifiedRule:
             )
         return out
 
-
-def _visitors_gone_at(timeline: Timeline, index: int, gone_sec: float) -> float | None:
-    states = timeline.states
-    for i in range(index, len(states)):
-        if states[i].visitors:
-            continue
-        stretch = [s for s in states[i:] if s.t - states[i].t <= gone_sec]
-        if all(not s.visitors for s in stretch) and (states[-1].t - states[i].t >= gone_sec or stretch[-1] is states[-1]):
-            return states[i].t
-    return None
