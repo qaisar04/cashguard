@@ -67,11 +67,9 @@ class JobServiceTest {
         assertThat(response.status()).isEqualTo(JobStatus.DONE.wire());
         assertThat(response.verdict()).isEqualTo(Verdict.VIOLATION);
         assertThat(response.violations()).singleElement().satisfies(v -> {
-            assertThat(v.typeId()).isEqualTo(TYPE_ID);
             assertThat(v.type()).isEqualTo(TYPE_RU);
             assertThat(v.timecodeSec()).isEqualTo(TIMECODE);
             assertThat(v.evidenceFrames()).hasSize(1);
-            assertThat(v.rule().document()).isEqualTo("doc");
         });
     }
 

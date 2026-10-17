@@ -7,7 +7,7 @@ from pathlib import Path
 from app.jobs import JobStore
 from app.schemas import Event, EvidenceFrame, RuleReference
 from app.settings import OBSERVER_DETECTOR, OBSERVER_STUB, Settings, load_pipeline_config
-from pipeline.analyzer import AnalysisEvent, Analyzer
+from pipeline.analyzer import DIAGNOSTICS_DIR, AnalysisEvent, Analyzer
 from pipeline.observers.base import Observer
 from rules.catalog import RuleCatalog
 
@@ -35,7 +35,7 @@ class _Holder:
         self.initialized = True
         cfg = load_pipeline_config(settings.config_path)
         self.settings = settings
-        self.analyzer = Analyzer(cfg, [_build_observer(settings, cfg)], RuleCatalog.load())
+        self.analyzer = Analyzer(cfg, [_build_observer(settings, cfg)], RuleCatalog.load(), settings.data_dir / DIAGNOSTICS_DIR)
         self.jobs = JobStore(self.run_events, settings.workers, settings.job_ttl_sec)
         settings.data_dir.mkdir(parents=True, exist_ok=True)
         log.info("ML service ready: observer=%s, data_dir=%s", settings.observer, settings.data_dir)

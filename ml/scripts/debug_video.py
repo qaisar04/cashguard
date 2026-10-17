@@ -49,6 +49,9 @@ def main() -> None:
         encoding="utf-8",
     )
     print(f"{len(frames)} frames, {len(observations)} observations, {len(events)} event(s) in {meta.elapsed_ms} ms -> {args.out}")
+    for t in meta.tracks:
+        flags = ", ".join(k for k in ("reflection", "behind_glass", "entered") if getattr(t, k)) or "-"
+        print(f"  track {t.id}: {t.first_ts}-{t.last_ts}s score={t.mean_score} center={t.mean_center} {flags} counted={t.counted}")
     for e in events:
         print(f"  {e.type_id} @ {e.timecode_sec}s")
 

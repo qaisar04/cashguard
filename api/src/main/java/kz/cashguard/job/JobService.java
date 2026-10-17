@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 import kz.cashguard.api.dto.EvidenceFrameDto;
 import kz.cashguard.api.dto.JobResponse;
-import kz.cashguard.api.dto.RuleReferenceDto;
 import kz.cashguard.api.dto.Verdict;
 import kz.cashguard.api.dto.ViolationDto;
 import kz.cashguard.config.AppProperties;
@@ -92,10 +91,8 @@ public class JobService {
         List<EvidenceFrameDto> frames = event.evidenceFrames().stream()
                 .map(frame -> new EvidenceFrameDto(frame.timestampSec(), frame.imageBase64()))
                 .toList();
-        RuleReferenceDto rule = event.rule() == null
-                ? null
-                : new RuleReferenceDto(event.rule().document(), event.rule().clause(), event.rule().url());
-        return new ViolationDto(event.type(), type.id(), event.timecodeSec(), event.description(), frames, rule);
+        log.debug("Job event {} ({}) at {}s", type.id(), event.type(), event.timecodeSec());
+        return new ViolationDto(event.type(), event.timecodeSec(), event.description(), frames);
     }
 
     private static JobResponse toResponse(Job job) {

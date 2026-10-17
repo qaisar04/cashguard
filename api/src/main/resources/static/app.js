@@ -116,18 +116,23 @@ function violationCard(v, index) {
       <img src="data:image/jpeg;base64,${f.image_base64}" alt="кадр ${fmt(f.timestamp_sec)}">
       <span>${fmt(f.timestamp_sec)}</span>
     </div>`).join("");
-  const rule = v.rule ? `
-    <div class="rule">
-      <b>Нормативный источник:</b> ${esc(v.rule.document)}${v.rule.clause ? `, ${esc(v.rule.clause)}` : ""}
-      ${v.rule.url ? ` — <a href="${esc(v.rule.url)}" target="_blank" rel="noopener">adilet.zan.kz</a>` : ""}
-    </div>` : "";
+  const [observed, citation] = splitCitation(v.description);
+  const rule = citation ? `<div class="rule">${esc(citation)}</div>` : "";
   card.innerHTML = `
     <h3>${index}. ${esc(v.type)}</h3>
-    <div class="meta">Таймкод: <b>${fmt(v.timecode_sec)}</b> · код типа: <code>${esc(v.type_id)}</code></div>
-    <p class="desc">${esc(v.description)}</p>
+    <div class="meta">Таймкод: <b>${fmt(v.timecode_sec)}</b></div>
+    <p class="desc">${esc(observed)}</p>
     <div class="frames">${frames}</div>
     ${rule}`;
   return card;
+}
+
+const CITATION_MARKER = "Нормативный источник:";
+
+function splitCitation(description) {
+  const text = String(description ?? "");
+  const at = text.indexOf(CITATION_MARKER);
+  return at < 0 ? [text, ""] : [text.slice(0, at).trim(), text.slice(at).trim()];
 }
 
 function fmt(sec) {

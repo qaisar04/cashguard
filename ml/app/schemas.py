@@ -33,6 +33,19 @@ class Event(BaseModel):
     rule: RuleReference
 
 
+class TrackInfo(BaseModel):
+    id: int
+    first_ts: float
+    last_ts: float
+    mean_score: float
+    mean_center: tuple[float, float]
+    reflection: bool
+    behind_glass: bool
+    entered: bool
+    inside: bool | None
+    counted: bool
+
+
 class InferMeta(BaseModel):
     frames: int
     sampled_fps: float
@@ -40,6 +53,7 @@ class InferMeta(BaseModel):
     observations: int
     observers: list[str]
     elapsed_ms: int
+    tracks: list[TrackInfo]
 
 
 class InferResponse(BaseModel):

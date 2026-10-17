@@ -4,6 +4,7 @@ import logging
 import shutil
 import uuid
 from contextlib import asynccontextmanager
+from dataclasses import asdict
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, UploadFile, status
@@ -60,7 +61,7 @@ async def infer(request: InferRequest) -> InferResponse:
     if not path.is_file():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Video not found: {path}")
     events, meta = await run_in_threadpool(state.analyzer.analyze, path)
-    return InferResponse(events=[to_schema(e) for e in events], meta=InferMeta(**meta.__dict__))
+    return InferResponse(events=[to_schema(e) for e in events], meta=InferMeta.model_validate(asdict(meta)))
 
 
 @app.post(f"{API_V1}/analyze", response_model=AnalyzeResponse, status_code=status.HTTP_202_ACCEPTED,

@@ -16,6 +16,11 @@ class RuleReference:
     document: str
     clause: str
     url: str
+    short: str
+
+    @property
+    def citation(self) -> str:
+        return f"Нормативный источник: {self.short}, {self.clause}."
 
 
 @dataclass(frozen=True)
@@ -43,7 +48,12 @@ class RuleCatalog:
                 family=item["family"],
                 name_ru=item["name_ru"],
                 description_ru=item["description_ru"],
-                reference=RuleReference(document=doc["document"], clause=item["normative"].get("clause", ""), url=doc["url"]),
+                reference=RuleReference(
+                    document=doc["document"],
+                    clause=item["normative"].get("clause", ""),
+                    url=doc["url"],
+                    short=doc.get("short", doc["document"]),
+                ),
             )
         return cls(types)
 

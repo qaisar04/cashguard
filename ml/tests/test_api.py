@@ -45,6 +45,7 @@ def test_infer_returns_events_with_evidence(client, sample_video):
     event = body["events"][0]
     assert event["timecode_sec"] == 6.0
     assert event["rule"]["url"].startswith("https://adilet.zan.kz")
+    assert event["description"].rstrip().endswith(".") and "Нормативный источник" in event["description"] and "п. " in event["description"]
     assert 1 <= len(event["evidence_frames"]) <= 3
     base64.b64decode(event["evidence_frames"][0]["image_base64"])
     assert body["meta"]["frames"] >= 12

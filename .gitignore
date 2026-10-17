@@ -6,3 +6,4 @@ data/
 eval*.csv
 .idea/
 eval*.log
+.claude/worktrees/
