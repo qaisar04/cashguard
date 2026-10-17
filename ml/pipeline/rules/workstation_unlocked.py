@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from app.settings import RulesConfig
 from pipeline.observers.base import SCREEN_UNLOCKED_STATES
-from pipeline.rules.base import Candidate, evidence_points, fmt
+from pipeline.rules.base import Candidate, departure_ts, evidence_points, fmt
 from pipeline.timeline import SecondState, Timeline
 
 TYPE_ID = "workstation_unlocked"
@@ -19,7 +19,7 @@ class WorkstationUnlockedRule:
         for run in timeline.runs(unlocked_and_alone):
             if timeline.span_sec(run) < cfg.unattended_sec:
                 continue
-            onset, end = timeline.states[run[0]].t, timeline.states[run[1] - 1].t
+            onset, end = departure_ts(timeline, run[0], cfg), timeline.states[run[1] - 1].t
             out.append(
                 Candidate(
                     type_id=TYPE_ID,

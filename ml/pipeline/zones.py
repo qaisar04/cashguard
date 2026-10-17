@@ -27,6 +27,9 @@ class Zones:
     aspect: float
     source: str = ZONE_SOURCE_CONFIG
 
+    def seat_distance(self, p: Point) -> float | None:
+        return None if self.monitor is None else distance(p, self.monitor, self.aspect)
+
     def at_cashier_seat(self, p: Point) -> bool:
         return self.monitor is not None and distance(p, self.monitor, self.aspect) <= self.cashier_radius
 

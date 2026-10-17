@@ -32,8 +32,12 @@ class DetectorObserver:
         images = [f.image for f in frames]
         per_frame: list[list] = [[] for _ in frames]
         for detector, cfg in self.detectors:
-            for i, detections in enumerate(detector.detect(images, cfg.queries)):
-                per_frame[i].extend(d for d in detections if cfg.passes(d.group, d.score))
+            sampled = list(range(0, len(frames), cfg.frame_stride))
+            results = detector.detect([images[i] for i in sampled], cfg.queries)
+            for i in range(len(frames)):
+                # static things (cash, bags, glazing) do not move between adjacent seconds: reuse the nearest processed frame
+                nearest = min(range(len(sampled)), key=lambda k: abs(sampled[k] - i))
+                per_frame[i].extend(d for d in results[nearest] if cfg.passes(d.group, d.score))
         observations: list[Observation] = []
         for frame, detections in zip(frames, per_frame):
             for det in detections:

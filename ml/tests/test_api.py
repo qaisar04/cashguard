@@ -43,7 +43,7 @@ def test_infer_returns_events_with_evidence(client, sample_video):
     types = {e["type_id"] for e in body["events"]}
     assert types == {"valuables_left_unattended"}  # workstation_unlocked in the same window is suppressed
     event = body["events"][0]
-    assert event["timecode_sec"] == 6.0
+    assert event["timecode_sec"] == 5.0  # the last second the cashier was still at the seat (departure), absence starts at 6
     assert event["rule"]["url"].startswith("https://adilet.zan.kz")
     assert event["description"].rstrip().endswith(".") and "Нормативный источник" in event["description"] and "п. " in event["description"]
     assert 1 <= len(event["evidence_frames"]) <= 3
