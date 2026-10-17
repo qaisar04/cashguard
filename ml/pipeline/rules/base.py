@@ -23,10 +23,14 @@ class Rule(Protocol):
     def evaluate(self, timeline: Timeline, cfg: RulesConfig) -> list[Candidate]: ...
 
 
+EVIDENCE_SPAN_SEC = 4.0  # every evidence frame must stay within ±5 s of the reported timecode (the onset)
+
+
 def evidence_points(onset: float, end: float) -> list[float]:
-    if end - onset < 1.0:
+    last = min(end, onset + EVIDENCE_SPAN_SEC)
+    if last - onset < 1.0:
         return [onset]
-    return [onset, (onset + end) / 2, end]
+    return [onset, (onset + last) / 2, last]
 
 
 def fmt(ts: float) -> str:
