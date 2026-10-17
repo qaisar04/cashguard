@@ -13,6 +13,7 @@ detectors:
     # Personal items / drinks score lower than people (handbag 0.44-0.66, cup 0.3-0.5 on the dataset;
     # the desk phone reaches 0.30 as "handbag"): per-group thresholds.
     group_thresholds:
+      monitor: 0.45         # a tilted laptop lid scores ~0.6-0.75 once the cashier is gone; monitors have no "ghosts"
       personal_item: 0.4
       drink: 0.35
     queries:
