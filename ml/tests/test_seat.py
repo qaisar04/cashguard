@@ -104,3 +104,22 @@ def test_cashier_walking_out_past_the_seat_is_not_the_cashier_again():
     walk_out = Track(2, [(16.0, box_at((0.38, 0.47))), (17.0, box_at((0.47, 0.52))), (18.0, box_at((0.50, 0.53)))])
     seat = locate_seat([_track(1, CASHIER_CHAIR, 0, 15), walk_out], z)
     assert seat is not None and seat.cashier_ids == {1}
+
+
+def test_seat_is_the_seated_position_not_the_median_of_standing_frames():
+    # Х-24: 2 s seated at the laptop, then 6 s standing behind the desk (taller box, centre higher in the frame)
+    z = _zones()
+    seated = [(float(t), box_at(CASHIER_CHAIR, 0.07)) for t in range(2)]
+    standing = [(float(t), (0.40, 0.25, 0.52, 0.49)) for t in range(2, 8)]
+    seat = locate_seat([Track(1, seated + standing)], z)
+    assert seat is not None and seat.anchor == CASHIER_CHAIR
+
+
+def test_cashier_is_present_on_the_chair_or_standing_at_the_laptop_but_not_on_the_way_out():
+    z = _zones()
+    seat = locate_seat([_track(1, CASHIER_CHAIR, 0, 10)], z)
+    z = z.with_seat(seat.anchor, seat.cashier_ids)
+    standing_at_laptop = (0.52, 0.40)      # Х-14: 0.08 from the chair, 0.06 from the laptop
+    walking_out = (0.36, 0.33)             # Х-26: 0.08-0.09 from the chair, 0.17+ from the laptop
+    assert z.at_cashier_seat(CASHIER_CHAIR) and z.at_cashier_seat(standing_at_laptop)
+    assert not z.at_cashier_seat(walking_out)

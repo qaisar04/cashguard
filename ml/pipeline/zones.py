@@ -11,7 +11,7 @@ from pipeline.observers.base import KIND_GLASS, KIND_MONITOR, KIND_PERSON, Obser
 log = logging.getLogger(__name__)
 
 ANCHOR_CELL = 0.05
-DEFAULT_SEAT_RADIUS = 0.10
+DEFAULT_SEAT_RADIUS = 0.08
 DEFAULT_SEAT_SETTLE_SEC = 2.0
 EDGE_TOLERANCE = 0.03
 ZONE_SOURCE_CONFIG = "config"
@@ -40,9 +40,13 @@ class Zones:
         return track_id in self.cashier_ids
 
     def at_cashier_seat(self, p: Point) -> bool:
-        """Within cashier_radius of the seat (the cashier's own place once located, the laptop before that)."""
-        anchor = self.seat if self.seat is not None else self.monitor
-        return anchor is not None and distance(p, anchor, self.aspect) <= self.cashier_radius
+        """At the workplace: on the seat itself (seat_radius) or at the desk by the laptop (cashier_radius).
+
+        The seat is exact, so its radius is tight: the door is often only 0.1 above the chair in the frame.
+        The laptop radius keeps a cashier who works standing next to it (Х-14) present.
+        """
+        at_laptop = self.monitor is not None and distance(p, self.monitor, self.aspect) <= self.cashier_radius
+        return at_laptop or (self.seat is not None and distance(p, self.seat, self.aspect) <= self.seat_radius)
 
     def on_desk(self, p: Point) -> bool:
         return self.monitor is not None and distance(p, self.monitor, self.aspect) <= self.desk_radius

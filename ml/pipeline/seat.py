@@ -13,6 +13,8 @@ log = logging.getLogger(__name__)
 # A re-identified person shows up as a new track born on the frame where the old one dies (duplicate box):
 # one shared timestamp is a hand-off, two or more are two people present together.
 MAX_HANDOFF_OVERLAP = 1
+# Standing boxes are 1.5-1.7x taller than seated ones on the dataset (0.21-0.26 vs 0.13-0.16 of frame height).
+SEATED_HEIGHT_TOLERANCE = 1.25
 
 
 @dataclass(frozen=True)
@@ -38,7 +40,7 @@ def locate_seat(tracks: list[Track], zones: Zones) -> Seat | None:
     primary = max(candidates, key=lambda t: (dwell[t.id], -t.first_ts))
     if dwell[primary.id] <= 0:
         return None
-    anchor = _median_center([c for c in _centers(primary) if zones.on_desk(c)])
+    anchor = _workplace(primary, zones)
     cashiers = [primary]
     for t in sorted(candidates, key=lambda t: -dwell[t.id]):
         if t is primary or any(_overlap(t, c) > MAX_HANDOFF_OVERLAP for c in cashiers):
@@ -48,6 +50,20 @@ def locate_seat(tracks: list[Track], zones: Zones) -> Seat | None:
     seat = Seat(anchor=anchor, cashier_ids=frozenset(t.id for t in cashiers))
     log.info("seat: anchor=(%.2f,%.2f) cashier tracks=%s", anchor[0], anchor[1], sorted(seat.cashier_ids))
     return seat
+
+
+def _workplace(t: Track, zones: Zones) -> Point:
+    """Where the cashier sits at the laptop.
+
+    The whole-track median drifts to wherever she stood longest (Х-22: by the door, after 8 s at the laptop and
+    12 s standing / walking out), and a standing person's box is ~1.5x taller with its centre higher in the frame
+    (Х-24), so only the frames at the laptop with a seated-size box define the seat.
+    """
+    boxes = [b for _, b in t.points if distance(center(b), zones.monitor, zones.aspect) <= zones.cashier_radius]
+    if not boxes:
+        return _median_center([c for c in _centers(t) if zones.on_desk(c)])
+    seated_height = min(b[3] - b[1] for b in boxes) * SEATED_HEIGHT_TOLERANCE
+    return _median_center([center(b) for b in boxes if b[3] - b[1] <= seated_height])
 
 
 def _settles_at(t: Track, anchor: Point, zones: Zones) -> bool:
