@@ -34,6 +34,7 @@ class Person:
     first_seen: float
     counted: bool = True
     entered: bool = False
+    cashier: bool = False
 
 
 @dataclass
@@ -57,7 +58,7 @@ class SecondState:
 
     @property
     def visitors(self) -> list[Person]:
-        return [p for p in self.persons if not p.at_seat and p.counted]
+        return [p for p in self.persons if not p.cashier and p.counted]
 
 
 @dataclass
@@ -109,14 +110,16 @@ def _state_at(ts: float, obs: list[Observation], neighbours: list[Observation], 
         if box is None or not track.counted():
             continue
         c = center(box)
+        cashier = zones.is_cashier(track.id)
         state.persons.append(
             Person(
                 track_id=track.id,
                 center=c,
-                at_seat=zones.at_cashier_seat(c),
+                at_seat=cashier and zones.at_cashier_seat(c),
                 in_door=zones.in_door(c),
                 first_seen=track.first_ts,
                 entered=track.entered,
+                cashier=cashier,
             )
         )
     monitors = [o for o in obs if o.kind == KIND_MONITOR]

@@ -178,3 +178,14 @@ def test_engine_reports_both_workplace_rules_together():
     states = [state(t, [CASHIER], personal_items=1, drinks=1) for t in range(0, 8)]
     events = RuleEngine(default_rules(), rules_cfg()).run(timeline(states))
     assert sorted(e.type_id for e in events) == ["food_drink_at_workplace", "personal_items_at_workplace"]
+
+
+def test_unauthorized_entry_ignores_client_handed_over_to_a_new_track():
+    # Х-39 @50 s: the client's track dies on the frame where its replacement is born; nobody else is being served
+    client = person(2, COUNTER, first_seen=0.0)
+    replacement = person(3, COUNTER, first_seen=6.0)
+    states = [state(t, [CASHIER, client]) for t in range(0, 6)] + [state(6, [CASHIER, client, replacement])]
+    states += [state(t, [CASHIER, replacement]) for t in range(7, 12)]
+    tracks = [Track(1, [(float(t), box_at(SEAT)) for t in range(12)]), Track(2, [(float(t), box_at(COUNTER)) for t in range(7)]),
+              Track(3, [(float(t), box_at(COUNTER)) for t in range(6, 12)], entered=True)]
+    assert UnauthorizedEntryRule().evaluate(timeline(states, tracks), rules_cfg()) == []

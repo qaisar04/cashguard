@@ -81,6 +81,8 @@ class StateConfig(BaseModel):
 class ZonesConfig(BaseModel):
     cashier_radius: float = Field(gt=0)
     desk_radius: float = Field(gt=0)
+    seat_radius: float = Field(gt=0, default=0.10)
+    seat_settle_sec: float = Field(ge=0, default=2.0)
     safe_radius: float = Field(gt=0)
     door: list[list[float]] = Field(min_length=3)
     glass: list[list[float]] = Field(min_length=3)

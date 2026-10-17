@@ -13,6 +13,7 @@ from pipeline.evidence import EvidenceBuilder, PersonMarks, person_marks
 from pipeline.observers.base import KIND_PERSON, Observation, Observer
 from pipeline.rules.base import Candidate
 from pipeline.rules.engine import RuleEngine, default_rules
+from pipeline.seat import locate_seat
 from pipeline.timeline import build_timeline
 from pipeline.tracking import Track, annotate_tracks, track
 from pipeline.video import Frame, probe, sample_frames
@@ -46,6 +47,7 @@ class TrackDiagnostics:
     entered: bool
     inside: bool | None
     counted: bool
+    cashier: bool
 
 
 @dataclass(frozen=True)
@@ -97,7 +99,7 @@ class Analyzer:
             observations=len(observations),
             observers=[o.name for o in self.observers],
             elapsed_ms=int((time.monotonic() - started) * 1000),
-            tracks=[_track_diagnostics(t) for t in analysis.tracks],
+            tracks=[_track_diagnostics(t, analysis.zones) for t in analysis.tracks],
         )
         log.info("analyzed %s: %d event(s) in %d ms", video_path.name, len(analysis.events), meta.elapsed_ms)
         self._write_diagnostics(video_path, analysis.events, meta)
@@ -121,6 +123,9 @@ class Analyzer:
         persons = [o for o in observations if o.kind == KIND_PERSON]
         tracks = track(persons, self.cfg.tracking.iou_threshold, self.cfg.tracking.max_missing_sec)
         annotate_tracks(tracks, zones, self.cfg.tracking)
+        seat = locate_seat(tracks, zones)
+        if seat is not None:
+            zones = zones.with_seat(seat.anchor, seat.cashier_ids)
         marks = person_marks(tracks, zones)
         timeline = build_timeline([f.ts for f in frames], observations, tracks, zones)
         candidates = self.engine.run(timeline)
@@ -148,7 +153,7 @@ def _effective_fps(video_path: Path, cfg: VideoConfig) -> float:
     return cfg.max_frames / duration
 
 
-def _track_diagnostics(t) -> TrackDiagnostics:
+def _track_diagnostics(t: Track, zones: Zones) -> TrackDiagnostics:
     centers = [((b[0] + b[2]) / 2, (b[1] + b[3]) / 2) for _, b in t.points]
     return TrackDiagnostics(
         id=t.id,
@@ -161,6 +166,7 @@ def _track_diagnostics(t) -> TrackDiagnostics:
         entered=t.entered,
         inside=t.inside,
         counted=t.counted(),
+        cashier=zones.is_cashier(t.id),
     )
 
 

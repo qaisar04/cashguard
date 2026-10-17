@@ -22,16 +22,22 @@ def rules_cfg(**overrides) -> RulesConfig:
     return RulesConfig(**base)
 
 
-def zones() -> Zones:
+CASHIER_TRACK_ID = 1
+
+
+def zones(cashier_ids: tuple[int, ...] = (CASHIER_TRACK_ID,)) -> Zones:
+    """Laptop and seat at SEAT; track 1 is the cashier (as pipeline.seat.locate_seat would decide for a seated track)."""
     cfg = ZonesConfig(cashier_radius=0.16, desk_radius=0.3, safe_radius=0.18, door=DOOR_POLY, glass=GLASS_POLY)
     return Zones(monitor=SEAT, cashier_radius=cfg.cashier_radius, desk_radius=cfg.desk_radius, safe_radius=cfg.safe_radius,
-                 door=Polygon(tuple(tuple(p) for p in DOOR_POLY)), glass=Polygon(tuple(tuple(p) for p in GLASS_POLY)), aspect=0.55)
+                 door=Polygon(tuple(tuple(p) for p in DOOR_POLY)), glass=Polygon(tuple(tuple(p) for p in GLASS_POLY)), aspect=0.55,
+                 seat_radius=cfg.seat_radius, seat_settle_sec=cfg.seat_settle_sec, seat=SEAT, cashier_ids=frozenset(cashier_ids))
 
 
 def person(track_id: int, where, first_seen: float = 0.0, entered: bool | None = None) -> Person:
     z = zones()
-    return Person(track_id=track_id, center=where, at_seat=z.at_cashier_seat(where), in_door=z.in_door(where),
-                  first_seen=first_seen, entered=(first_seen > 0) if entered is None else entered)
+    cashier = z.is_cashier(track_id)
+    return Person(track_id=track_id, center=where, at_seat=cashier and z.at_cashier_seat(where), in_door=z.in_door(where),
+                  first_seen=first_seen, entered=(first_seen > 0) if entered is None else entered, cashier=cashier)
 
 
 def state(t: float, persons=(), screen=SCREEN_UNKNOWN, cash=0, bags=0, safe_open=False, person_at_safe=False, door_open=False,

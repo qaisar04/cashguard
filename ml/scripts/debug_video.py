@@ -65,12 +65,17 @@ def main() -> None:
             (args.out / f"evidence_{i}_{e.type_id}_{ts:06.1f}.jpg").write_bytes(base64.b64decode(jpeg))
     zones = analysis.zones
     print(f"zones ({zones.source}): door={[tuple(round(v, 2) for v in p) for p in zones.door.points]} glass={[tuple(round(v, 2) for v in p) for p in zones.glass.points]}")
+    print(f"monitor={_fmt_point(zones.monitor)} seat={_fmt_point(zones.seat)} cashier tracks={sorted(zones.cashier_ids)}")
     print(f"{len(frames)} frames, {len(observations)} observations, {len(events)} event(s) -> {args.out}")
     for t in analysis.tracks:
-        flags = ", ".join(k for k in ("reflection", "behind_glass", "entered") if getattr(t, k)) or "-"
-        print(f"  track {t.id}: {t.first_ts:.1f}-{t.last_ts:.1f}s score={t.mean_score:.2f} {flags} counted={t.counted()}")
+        flags = [k for k in ("reflection", "behind_glass", "entered") if getattr(t, k)] + (["cashier"] if zones.is_cashier(t.id) else [])
+        print(f"  track {t.id}: {t.first_ts:.1f}-{t.last_ts:.1f}s score={t.mean_score:.2f} {', '.join(flags) or '-'} counted={t.counted()}")
     for e in events:
         print(f"  {e.type_id} @ {e.timecode_sec}s")
+
+
+def _fmt_point(p) -> str:
+    return "none" if p is None else f"({p[0]:.2f},{p[1]:.2f})"
 
 
 if __name__ == "__main__":

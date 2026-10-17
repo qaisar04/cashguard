@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from statistics import median
 
 from app.settings import GlassDetectionConfig, ZonesConfig
@@ -11,6 +11,8 @@ from pipeline.observers.base import KIND_GLASS, KIND_MONITOR, KIND_PERSON, Obser
 log = logging.getLogger(__name__)
 
 ANCHOR_CELL = 0.05
+DEFAULT_SEAT_RADIUS = 0.10
+DEFAULT_SEAT_SETTLE_SEC = 2.0
 EDGE_TOLERANCE = 0.03
 ZONE_SOURCE_CONFIG = "config"
 ZONE_SOURCE_DETECTED = "detected"
@@ -26,9 +28,21 @@ class Zones:
     glass: Polygon
     aspect: float
     source: str = ZONE_SOURCE_CONFIG
+    seat_radius: float = DEFAULT_SEAT_RADIUS
+    seat_settle_sec: float = DEFAULT_SEAT_SETTLE_SEC
+    seat: Point | None = None
+    cashier_ids: frozenset[int] = frozenset()
+
+    def with_seat(self, anchor: Point, cashier_ids: frozenset[int]) -> "Zones":
+        return replace(self, seat=anchor, cashier_ids=cashier_ids)
+
+    def is_cashier(self, track_id: int) -> bool:
+        return track_id in self.cashier_ids
 
     def at_cashier_seat(self, p: Point) -> bool:
-        return self.monitor is not None and distance(p, self.monitor, self.aspect) <= self.cashier_radius
+        """Within cashier_radius of the seat (the cashier's own place once located, the laptop before that)."""
+        anchor = self.seat if self.seat is not None else self.monitor
+        return anchor is not None and distance(p, anchor, self.aspect) <= self.cashier_radius
 
     def on_desk(self, p: Point) -> bool:
         return self.monitor is not None and distance(p, self.monitor, self.aspect) <= self.desk_radius
@@ -73,6 +87,8 @@ def build_zones(cfg: ZonesConfig, observations: list[Observation], aspect: float
         glass=glass,
         aspect=aspect,
         source=source,
+        seat_radius=cfg.seat_radius,
+        seat_settle_sec=cfg.seat_settle_sec,
     )
 
 

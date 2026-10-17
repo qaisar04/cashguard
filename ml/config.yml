@@ -89,9 +89,13 @@ door:
 
 # Distances are in units of frame height (x is scaled by width/height), so they survive
 # different camera positions; the cashier/desk/safe zones are derived from detections.
+# The cashier is the person track that dwells at the desk longest (pipeline/seat.py); the seat is where that
+# track sits. Distance to the laptop alone cannot separate the cashier from a client across the desk (0.10-0.16).
 zones:
-  cashier_radius: 0.16      # around the monitor: the cashier's seat
+  cashier_radius: 0.16      # around the seat: the cashier is at the workplace
   desk_radius: 0.30         # around the monitor: desk surface where cash/bags lie
+  seat_radius: 0.10         # a re-tracked person is the cashier again only when it settles this close to the seat...
+  seat_settle_sec: 2.0      # ...for at least this long (walking past the seat on the way out is not settling)
   safe_radius: 0.18         # around an open safe: person "at the safe"
   # Fallback polygons (normalized), used when the glazing is not detected; pick coordinates with scripts/extract_frame.py.
   door: [[0.0, 0.0], [0.50, 0.0], [0.50, 0.45], [0.0, 0.55]]   # entrance area: door opening + glass wall
