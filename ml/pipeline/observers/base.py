@@ -24,6 +24,9 @@ SCREEN_DESKTOP = "desktop"
 SCREEN_UNLOCKED_STATES = (SCREEN_APPLICATION, SCREEN_DESKTOP)
 SCREEN_UNKNOWN = "unknown"
 
+STATE_OPEN = "open"
+STATE_CLOSED = "closed"
+
 
 @dataclass(frozen=True)
 class Observation:

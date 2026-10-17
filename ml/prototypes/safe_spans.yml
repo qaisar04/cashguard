@@ -1,0 +1,23 @@
+# Labelled time spans used to build CLIP prototypes for the safe-state classifier (open / closed).
+# The crop is the OWLv2-located gray safe cabinet (config `safe.anchor`), padded so the swung-open door stays inside.
+# Spans were chosen by looking at the crops (scripts/build_prototypes.py --target safe --sheet <dir> --videos ...);
+# seconds where the door is mid-swing or the teller hides the front are left out; `step` thins long static spans.
+videos_dir: ~/Downloads/open/videos
+spans:
+  - {video: X-20, start: 2,   end: 11,  label: open}       # safe left wide open, teller sits down
+  - {video: X-21, start: 2,   end: 3,   label: open}       # clean counterpart: opened briefly, closed at 4-5
+  - {video: X-25, start: 8,   end: 11,  label: open}       # folder goes into the safe
+  - {video: X-25, start: 15,  end: 18,  label: open}
+  - {video: X-13, start: 48,  end: 51,  label: open}       # bundles go into the safe
+  - {video: X-14, start: 117, end: 123, label: open}
+  - {video: X-20, start: 0,   end: 1,   label: closed}
+  - {video: X-21, start: 7,   end: 19,  step: 2, label: closed}
+  - {video: X-25, start: 0,   end: 6,   label: closed}
+  - {video: X-25, start: 20,  end: 31,  step: 2, label: closed}     # key left hanging in the lock
+  - {video: X-13, start: 20,  end: 45,  step: 2, label: closed}     # collection bag held in front of the safe
+  - {video: X-13, start: 52,  end: 65,  step: 2, label: closed}
+  - {video: X-14, start: 0,   end: 60,  step: 3, label: closed}
+  - {video: X-14, start: 100, end: 114, step: 2, label: closed}
+  - {video: X-11, start: 0,   end: 25,  step: 2, label: closed}     # includes lights-off seconds
+  - {video: X-12, start: 0,   end: 42,  step: 2, label: closed}     # tilted framing, includes lights-off seconds
+  - {video: X-32, start: 0,   end: 21,  step: 2, label: closed}     # counting machine in front of the safe

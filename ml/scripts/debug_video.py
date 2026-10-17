@@ -17,7 +17,7 @@ import cv2
 import numpy as np
 
 from app.settings import Settings, load_pipeline_config
-from app.state import _build_observer
+from app.state import build_observers
 from pipeline.analyzer import Analyzer
 from pipeline.evidence import EvidenceBuilder, draw_zones
 from pipeline.video import sample_frames
@@ -38,13 +38,13 @@ def main() -> None:
     overrides = {k: v for k, v in (("observer", args.observer), ("stub_fixture", args.fixture)) if v}
     settings = Settings(**overrides)
     cfg = load_pipeline_config(settings.config_path)
-    observer = _build_observer(settings, cfg)
+    observers = build_observers(settings, cfg)
     info, frames = sample_frames(args.video, cfg.video.fps, cfg.video.max_side)
     if args.max_frames:
         frames = frames[: args.max_frames]
-    observations = observer.observe(frames)
+    observations = [o for observer in observers for o in observer.observe(frames)]
     aspect = info.width / info.height if info.height else 1.0
-    analysis = Analyzer(cfg, [observer], RuleCatalog.load()).analyze_observations(frames, observations, aspect)
+    analysis = Analyzer(cfg, observers, RuleCatalog.load()).analyze_observations(frames, observations, aspect)
 
     args.out.mkdir(parents=True, exist_ok=True)
     builder = EvidenceBuilder(cfg.evidence.model_copy(update={"frames": 1, "max_side": DEBUG_MAX_SIDE, "draw_boxes": True}))

@@ -131,7 +131,8 @@ def _state_at(ts: float, obs: list[Observation], neighbours: list[Observation], 
     if safes:
         state.safe_open = True
         state.safe_center = center(max(safes, key=lambda o: o.score).box)
-        state.person_at_safe = any(zones.near(p.center, state.safe_center) for p in state.persons)
+        # the cashier seat is next to the safe: only someone standing at it (not seated at the desk) counts as "at the safe"
+        state.person_at_safe = any(zones.near(p.center, state.safe_center) and not p.at_seat for p in state.persons)
     state.door_open = any(o.kind == KIND_DOOR_OPEN and zones.in_door(center(o.box)) for o in obs)
     return state
 
