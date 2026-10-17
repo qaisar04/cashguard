@@ -33,7 +33,7 @@ def test_hand_counting_without_machine_fires():
     states += [state(t, [CASHIER, CLIENT], actions=[ACTION_HAND_COUNTING]) for t in range(20, 26)]
     found = CashNotMachineVerifiedRule().evaluate(timeline(states), rules_cfg())
     assert len(found) == 1 and found[0].onset == 20.0
-    assert found[0].evidence_ts == [20.0, 22.5, 25.0]
+    assert found[0].evidence_ts == [20.0, 22.0, 24.0]  # evidence stays within 4 s of the timecode
     assert "вручную" in found[0].description
 
 
