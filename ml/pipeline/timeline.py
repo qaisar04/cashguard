@@ -93,19 +93,31 @@ class Timeline:
         return self.states[end - 1].t - self.states[start].t
 
 
-def visitor_left_at(states: list[SecondState], gone_sec: float) -> float | None:
-    """Start of the first visitor-free stretch of at least `gone_sec` after a visitor was seen (track dropouts are shorter)."""
-    seen = False
-    gone_since: float | None = None
-    for s in states:
-        if s.visitors:
-            seen = True
-            gone_since = None
-        elif seen:
-            gone_since = s.t if gone_since is None else gone_since
-            if s.t - gone_since >= gone_sec:
-                return gone_since
+def person_left_at(states: list[SecondState], gone_sec: float, open_ended: bool = False) -> float | None:
+    """Start of a stretch where fewer people are in the room than during an earlier stretch with 2+ people.
+
+    Both stretches must hold for `gone_sec` (shorter changes are track dropouts or reflections); with `open_ended`
+    a drop that lasts until the final state counts even if it is shorter.
+    """
+    peak = 0
+    for start, end, count in _count_runs(states):
+        stable = end - start >= gone_sec or (open_ended and end == states[-1].t)
+        if count >= peak:
+            peak = count if end - start >= gone_sec else peak
+        elif peak >= 2 and stable:
+            return start
     return None
+
+
+def _count_runs(states: list[SecondState]) -> list[tuple[float, float, int]]:
+    runs: list[tuple[float, float, int]] = []
+    for s in states:
+        n = len(s.persons)
+        if runs and runs[-1][2] == n:
+            runs[-1] = (runs[-1][0], s.t, n)
+        else:
+            runs.append((s.t, s.t, n))
+    return runs
 
 
 def build_timeline(frame_ts: list[float], observations: list[Observation], tracks: list[Track], zones: Zones) -> Timeline:

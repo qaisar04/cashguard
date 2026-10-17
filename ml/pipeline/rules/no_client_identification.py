@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from app.settings import RulesConfig
-from pipeline.observers.vlm import ACTION_CLIENT_GIVES_CASH, ACTION_ID_DOCUMENT
+from pipeline.observers.vlm import ACTION_BAG_HANDOVER, ACTION_CLIENT_GIVES_CASH, ACTION_ID_DOCUMENT
 from pipeline.rules.base import Candidate, evidence_points, fmt
 from pipeline.timeline import Timeline
 
@@ -9,13 +9,16 @@ TYPE_ID = "no_client_identification"
 
 
 class NoClientIdentificationRule:
-    """A client hands over cash and no ID document has been shown at any point before that."""
+    """A client hands over cash and no ID document has been shown at any point before that.
+
+    A collector dropping a bag is a different procedure (collector_handover_unverified), not a client payment.
+    """
 
     type_id = TYPE_ID
 
     def evaluate(self, timeline: Timeline, cfg: RulesConfig) -> list[Candidate]:
         out: list[Candidate] = []
-        for run in timeline.runs(lambda s: s.has_action(ACTION_CLIENT_GIVES_CASH)):
+        for run in timeline.runs(lambda s: s.has_action(ACTION_CLIENT_GIVES_CASH) and not s.has_action(ACTION_BAG_HANDOVER)):
             onset, end = timeline.states[run[0]].t, timeline.states[run[1] - 1].t
             if any(s.t <= end and s.has_action(ACTION_ID_DOCUMENT) for s in timeline.states):
                 continue

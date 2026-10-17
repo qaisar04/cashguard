@@ -68,18 +68,22 @@ tracking:
 
 # Action understanding for the "Деньги без проверки" family: a small VLM answers yes/no questions about
 # 3-frame windows cropped to the desk; rules combine its answers with the person timeline.
+# Off by default: on the open set Qwen3-VL-2B answers "machine_counting: yes" for nearly every window and
+# misses client-side actions (cash / ID handover), so only collector_handover_unverified and
+# unrecounted_cash_to_safe fire where labelled while no_client_identification false-fires; it also adds
+# ~5-7 s per window (~29 windows on a 145 s clip) on a shared M1 Pro GPU. Enable for experiments only.
 vlm:
-  enabled: false            # TODO(vlm): set after the s/window measurement meets the time budget (see report)
+  enabled: false
   model: Qwen/Qwen3-VL-2B-Instruct   # Apache-2.0; HuggingFaceTB/SmolVLM2-500M-Video-Instruct (Apache-2.0) is the light fallback
   device: auto
-  mode: list                # list: one short answer naming the true keys (~1 s decode); json: full JSON (~70 tokens); yes_no: 7 forward passes per window
+  mode: json                # json: full JSON answer (~70 tokens); list: short key list (~3x cheaper, noisier); yes_no: 7 forward passes per window
   stride_sec: 5
   window_sec: 6
   frames_per_window: 3
-  max_side: 448
+  max_side: 640
   crop_margin: 0.08
   min_crop_height: 0.5
-  max_new_tokens: 40
+  max_new_tokens: 120
   min_confidence: 0.5
   require_person_near_desk: true
 

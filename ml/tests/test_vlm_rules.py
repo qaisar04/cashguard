@@ -50,6 +50,11 @@ def test_cash_without_id_document_fires():
     assert len(found) == 1 and found[0].onset == 10.0
 
 
+def test_collector_bag_is_not_a_client_payment():
+    states = [state(t, [CASHIER, CLIENT], actions=[ACTION_CLIENT_GIVES_CASH, ACTION_BAG_HANDOVER]) for t in range(5, 11)]
+    assert NoClientIdentificationRule().evaluate(timeline(states), rules_cfg()) == []
+
+
 def test_cash_after_id_document_is_clean():
     states = [state(t, [CASHIER, CLIENT], actions=[ACTION_ID_DOCUMENT]) for t in range(0, 6)]
     states += [state(t, [CASHIER, CLIENT], actions=[ACTION_CLIENT_GIVES_CASH]) for t in range(10, 16)]

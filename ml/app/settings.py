@@ -67,14 +67,14 @@ class VlmConfig(BaseModel):
     enabled: bool = False
     model: str = "Qwen/Qwen3-VL-2B-Instruct"
     device: str = "auto"
-    mode: str = Field(default="list", pattern="^(list|json|yes_no)$", description="list: one short answer naming the true keys; json: one JSON answer per window; yes_no: P(yes) per question (7 forward passes)")
+    mode: str = Field(default="json", pattern="^(list|json|yes_no)$", description="json: one JSON answer per window; list: one short answer naming the true keys; yes_no: P(yes) per question (7 forward passes)")
     stride_sec: float = Field(gt=0, default=5.0)
     window_sec: float = Field(gt=0, default=6.0)
     frames_per_window: int = Field(ge=1, le=4, default=3)
-    max_side: int = Field(gt=0, default=448, description="each window frame is cropped to the desk area and resized to this")
+    max_side: int = Field(gt=0, default=640, description="each window frame is cropped to the desk area and resized to this")
     crop_margin: float = Field(ge=0, le=0.5, default=0.08)
     min_crop_height: float = Field(gt=0, le=1, default=0.5)
-    max_new_tokens: int = Field(gt=0, default=40)
+    max_new_tokens: int = Field(gt=0, default=120)
     min_confidence: float = Field(ge=0, le=1, default=0.5)
     require_person_near_desk: bool = True
 
