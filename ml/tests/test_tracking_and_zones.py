@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pipeline.observers.base import KIND_PERSON, Observation
-from pipeline.tracking import track
+from pipeline.tracking import Track, track
 from tests.helpers import box_at, zones
 
 
@@ -32,3 +32,46 @@ def test_zones_fall_back_to_dwell_peak_without_monitor():
     persons += [Observation(ts=float(t), kind=KIND_PERSON, box=box_at((0.15, 0.34)), score=0.9) for t in range(5, 8)]
     z = build_zones(cfg, persons, aspect=0.55)
     assert z.monitor is not None and z.at_cashier_seat((0.45, 0.35)) and not z.at_cashier_seat((0.15, 0.34))
+
+
+def _workplace_timeline(items, extra=()):
+    from pipeline.observers.base import KIND_BAG, KIND_DRINK, KIND_PERSONAL_ITEM
+    from pipeline.timeline import build_timeline
+    from tests.helpers import SEAT
+
+    kinds = {"item": KIND_PERSONAL_ITEM, "drink": KIND_DRINK, "bag": KIND_BAG}
+    cashier = Track(1, [(float(t), box_at(SEAT)) for t in range(4)])
+    obs = [Observation(ts=float(t), kind=kinds[kind], box=box_at(where, 0.03), score=0.5) for t, kind, where in items]
+    return build_timeline([0.0, 1.0, 2.0, 3.0], obs + list(extra), [cashier], zones())
+
+
+def test_timeline_counts_resting_personal_item_and_drink_near_seated_cashier():
+    near = (0.55, 0.55)
+    tl = _workplace_timeline([(t, "item", near) for t in range(4)] + [(t, "drink", near) for t in range(4)])
+    assert [s.personal_items_on_desk for s in tl.states] == [1, 1, 1, 1]
+    assert [s.drinks_on_desk for s in tl.states] == [1, 1, 1, 1]
+
+
+def test_timeline_ignores_personal_item_carried_past_the_desk():
+    moving = [(0, "item", (0.45, 0.45)), (1, "item", (0.55, 0.45)), (2, "item", (0.45, 0.55)), (3, "item", (0.55, 0.55))]
+    tl = _workplace_timeline(moving)
+    assert [s.personal_items_on_desk for s in tl.states] == [0, 0, 0, 0]
+
+
+def test_timeline_treats_personal_item_overlapping_cash_bag_as_valuables():
+    from pipeline.observers.base import KIND_BAG
+
+    near = (0.55, 0.55)
+    bag = [Observation(ts=float(t), kind=KIND_BAG, box=box_at(near, 0.03), score=0.5) for t in range(4)]
+    tl = _workplace_timeline([(t, "item", near) for t in range(4)], extra=bag)
+    assert [s.personal_items_on_desk for s in tl.states] == [0, 0, 0, 0]
+    assert [s.bags_on_desk for s in tl.states] == [1, 1, 1, 1]
+
+
+def test_timeline_ignores_items_on_desk_but_away_from_cashier():
+    from tests.helpers import COUNTER
+
+    tl = _workplace_timeline([(t, "item", COUNTER) for t in range(4)] + [(t, "drink", COUNTER) for t in range(4)])
+    assert zones().on_desk(COUNTER)
+    assert [s.personal_items_on_desk for s in tl.states] == [0, 0, 0, 0]
+    assert [s.drinks_on_desk for s in tl.states] == [0, 0, 0, 0]

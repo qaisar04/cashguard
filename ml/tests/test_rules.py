@@ -4,6 +4,8 @@ from pipeline.observers.base import SCREEN_APPLICATION, SCREEN_LOCK
 from pipeline.rules.cash_exposed_to_visitor import CashExposedToVisitorRule
 from pipeline.rules.cash_room_door_open import CashRoomDoorOpenRule
 from pipeline.rules.engine import RuleEngine, default_rules
+from pipeline.rules.food_drink_at_workplace import FoodDrinkAtWorkplaceRule
+from pipeline.rules.personal_items_at_workplace import PersonalItemsAtWorkplaceRule
 from pipeline.rules.safe_left_open import SafeLeftOpenRule
 from pipeline.rules.unauthorized_entry import UnauthorizedEntryRule
 from pipeline.rules.valuables_left_unattended import ValuablesLeftUnattendedRule
@@ -134,3 +136,45 @@ def test_engine_merges_same_type_and_caps_events():
     states += [state(t, [], screen=SCREEN_APPLICATION) for t in range(8, 14)]
     events = RuleEngine(default_rules(), rules_cfg(merge_gap_sec=5)).run(timeline(states))
     assert len(events) == 1 and events[0].onset == 0.0 and events[0].end == 13.0
+
+
+def test_personal_items_fires_when_cashier_sits_with_bag_on_desk():
+    states = [state(t, [CASHIER]) for t in range(0, 3)] + [state(t, [CASHIER], personal_items=1) for t in range(3, 10)]
+    found = PersonalItemsAtWorkplaceRule().evaluate(timeline(states), rules_cfg())
+    assert len(found) == 1 and found[0].onset == 3.0 and found[0].end == 9.0
+    assert found[0].type_id == "personal_items_at_workplace"
+    assert "личные вещи" in found[0].description and "3 с" in found[0].description
+
+
+def test_personal_items_ignores_short_or_unattended_runs():
+    short = [state(t, [CASHIER], personal_items=1) for t in range(0, 4)] + [state(t, [CASHIER]) for t in range(4, 10)]
+    assert PersonalItemsAtWorkplaceRule().evaluate(timeline(short), rules_cfg()) == []
+    alone = [state(t, [], personal_items=1) for t in range(0, 10)]
+    assert PersonalItemsAtWorkplaceRule().evaluate(timeline(alone), rules_cfg()) == []
+
+
+def test_personal_items_threshold_is_configurable():
+    states = [state(t, [CASHIER], personal_items=1) for t in range(0, 4)]
+    assert PersonalItemsAtWorkplaceRule().evaluate(timeline(states), rules_cfg(personal_items_sec=2)) != []
+    assert PersonalItemsAtWorkplaceRule().evaluate(timeline(states), rules_cfg(personal_items_sec=5)) == []
+
+
+def test_food_drink_fires_when_cashier_sits_with_cup_on_desk():
+    states = [state(t, [CASHIER], drinks=1) for t in range(0, 6)] + [state(t, [CASHIER]) for t in range(6, 10)]
+    found = FoodDrinkAtWorkplaceRule().evaluate(timeline(states), rules_cfg())
+    assert len(found) == 1 and found[0].onset == 0.0 and found[0].end == 5.0
+    assert found[0].type_id == "food_drink_at_workplace"
+    assert "напиток" in found[0].description
+
+
+def test_food_drink_ignores_short_or_unattended_runs():
+    short = [state(t, [CASHIER], drinks=1) for t in range(0, 3)] + [state(t, [CASHIER]) for t in range(3, 10)]
+    assert FoodDrinkAtWorkplaceRule().evaluate(timeline(short), rules_cfg()) == []
+    alone = [state(t, [], drinks=1) for t in range(0, 10)]
+    assert FoodDrinkAtWorkplaceRule().evaluate(timeline(alone), rules_cfg()) == []
+
+
+def test_engine_reports_both_workplace_rules_together():
+    states = [state(t, [CASHIER], personal_items=1, drinks=1) for t in range(0, 8)]
+    events = RuleEngine(default_rules(), rules_cfg()).run(timeline(states))
+    assert sorted(e.type_id for e in events) == ["food_drink_at_workplace", "personal_items_at_workplace"]

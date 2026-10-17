@@ -6,6 +6,8 @@ from app.settings import RulesConfig
 from pipeline.rules.base import Candidate, Rule
 from pipeline.rules.cash_exposed_to_visitor import CashExposedToVisitorRule
 from pipeline.rules.cash_room_door_open import CashRoomDoorOpenRule
+from pipeline.rules.food_drink_at_workplace import FoodDrinkAtWorkplaceRule
+from pipeline.rules.personal_items_at_workplace import PersonalItemsAtWorkplaceRule
 from pipeline.rules.safe_left_open import SafeLeftOpenRule
 from pipeline.rules.unauthorized_entry import UnauthorizedEntryRule
 from pipeline.rules.valuables_left_unattended import ValuablesLeftUnattendedRule
@@ -22,6 +24,8 @@ ALL_RULES: list[Rule] = [
     CashRoomDoorOpenRule(),
     UnauthorizedEntryRule(),
     CashExposedToVisitorRule(),
+    PersonalItemsAtWorkplaceRule(),
+    FoodDrinkAtWorkplaceRule(),
 ]
 
 

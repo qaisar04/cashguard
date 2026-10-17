@@ -24,7 +24,15 @@ class DetectorConfig(BaseModel):
     device: str = "auto"
     batch_size: int = Field(gt=0)
     score_threshold: float = Field(ge=0, le=1)
+    group_thresholds: dict[str, float] = Field(default_factory=dict, description="per-group override of score_threshold")
     queries: dict[str, list[str]]
+
+    @property
+    def detection_threshold(self) -> float:
+        return min([self.score_threshold, *self.group_thresholds.values()])
+
+    def passes(self, group: str, score: float) -> bool:
+        return score >= self.group_thresholds.get(group, self.score_threshold)
 
 
 class ScreenConfig(BaseModel):
@@ -67,6 +75,8 @@ class RulesConfig(BaseModel):
     unattended_sec: float = Field(ge=0)
     safe_open_sec: float = Field(ge=0)
     door_open_sec: float = Field(ge=0)
+    personal_items_sec: float = Field(ge=0, default=4)
+    food_drink_sec: float = Field(ge=0, default=4)
     min_presence_sec: float = Field(ge=0)
     merge_gap_sec: float = Field(ge=0)
     max_events: int = Field(gt=0)

@@ -12,6 +12,8 @@ KIND_CASH = "cash"
 KIND_BAG = "bag"
 KIND_SAFE_OPEN = "safe_open"
 KIND_DOOR_OPEN = "door_open"
+KIND_PERSONAL_ITEM = "personal_item"
+KIND_DRINK = "drink"
 
 ATTR_SCREEN_STATE = "screen_state"
 SCREEN_OFF = "off"
