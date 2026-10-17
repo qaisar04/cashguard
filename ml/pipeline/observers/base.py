@@ -25,6 +25,7 @@ SCREEN_UNLOCKED_STATES = (SCREEN_APPLICATION, SCREEN_DESKTOP)
 SCREEN_UNKNOWN = "unknown"
 
 STATE_OPEN = "open"
+STATE_ATTENDED = "attended"  # open, with a person handling it: not "left open"
 STATE_CLOSED = "closed"
 
 

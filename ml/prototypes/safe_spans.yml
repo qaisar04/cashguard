@@ -1,15 +1,17 @@
-# Labelled time spans used to build CLIP prototypes for the safe-state classifier (open / closed).
+# Labelled time spans used to build CLIP prototypes for the safe-state classifier.
+# open = door swung open and nobody handling the safe; attended = door open with a hand / person at it; closed.
 # The crop is the OWLv2-located gray safe cabinet (config `safe.anchor`), padded so the swung-open door stays inside.
 # Spans were chosen by looking at the crops (scripts/build_prototypes.py --target safe --sheet <dir> --videos ...);
 # seconds where the door is mid-swing or the teller hides the front are left out; `step` thins long static spans.
 videos_dir: ~/Downloads/open/videos
 spans:
-  - {video: X-20, start: 2,   end: 11,  label: open}       # safe left wide open, teller sits down
-  - {video: X-21, start: 2,   end: 3,   label: open}       # clean counterpart: opened briefly, closed at 4-5
-  - {video: X-25, start: 8,   end: 11,  label: open}       # folder goes into the safe
-  - {video: X-25, start: 15,  end: 18,  label: open}
-  - {video: X-13, start: 48,  end: 51,  label: open}       # bundles go into the safe
-  - {video: X-14, start: 117, end: 123, label: open}
+  - {video: X-20, start: 5,   end: 11,  label: open}       # safe left wide open, teller sits down and works
+  - {video: X-20, start: 2,   end: 4,   label: attended}   # teller stands at the open safe, hand on the door
+  - {video: X-21, start: 2,   end: 3,   label: attended}   # clean counterpart: opened briefly, closed at 4-5
+  - {video: X-25, start: 8,   end: 11,  label: attended}   # folder goes into the safe
+  - {video: X-25, start: 15,  end: 18,  label: attended}
+  - {video: X-13, start: 48,  end: 51,  label: attended}   # bundles go into the safe
+  - {video: X-14, start: 117, end: 123, label: attended}   # bundles go into the safe from the seat
   - {video: X-20, start: 0,   end: 1,   label: closed}
   - {video: X-21, start: 7,   end: 19,  step: 2, label: closed}
   - {video: X-25, start: 0,   end: 6,   label: closed}

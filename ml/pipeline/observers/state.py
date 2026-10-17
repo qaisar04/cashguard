@@ -9,11 +9,11 @@ from pipeline.anchor import locate_anchor
 from pipeline.clip_zero_shot import ClipZeroShot, crop
 from pipeline.crop_state import STATE_UNKNOWN, CropStateClassifier, load_prototypes
 from pipeline.detectors.base import Detector
-from pipeline.observers.base import STATE_CLOSED, STATE_OPEN, Observation
+from pipeline.observers.base import STATE_ATTENDED, STATE_CLOSED, STATE_OPEN, Observation
 from pipeline.video import Frame
 
 log = logging.getLogger(__name__)
-KNOWN_STATES = (STATE_OPEN, STATE_CLOSED)
+KNOWN_STATES = (STATE_OPEN, STATE_ATTENDED, STATE_CLOSED)
 
 
 @dataclass(frozen=True)
@@ -27,7 +27,8 @@ class StateProbe:
 
 
 class StateObserver:
-    """Emits `safe_open` / `door_open` boxes on the frames where the few-shot crop classifier says the object is open."""
+    """Emits `safe_open` / `door_open` boxes on the frames where the few-shot crop classifier says the object is open
+    and unattended (an open safe with a hand in it is `attended`: being used, not left open)."""
 
     name = "state"
 

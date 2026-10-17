@@ -57,6 +57,8 @@ screen:
 # 7x7 grid of CLIP patch embeddings instead of the global vector: a swung door is a local change that the global
 # embedding averages away. The crop is located once per video: OWLv2 median box of `anchor.queries` (padded by
 # `anchor.pad`), or `anchor.fallback_box` when there are too few hits.
+# Safe states: open (door swung, nobody at it), attended (door open, a hand / person handling it), closed;
+# only `open` becomes a safe_open observation, so loading the safe is not "left open".
 safe:
   enabled: true
   prototypes: prototypes/safe.npz
@@ -122,9 +124,8 @@ tracking:
   inside_vote_ratio: 0.5
 
 rules:
-  # cash_room_door_open and the "door was open" branch of unauthorized_entry stay off until the door classifier is verified.
-  enabled: [workstation_unlocked, valuables_left_unattended, safe_left_open, unauthorized_entry, cash_exposed_to_visitor, personal_items_at_workplace, food_drink_at_workplace]
-  door_state_trusted: false
+  enabled: [workstation_unlocked, valuables_left_unattended, safe_left_open, cash_room_door_open, unauthorized_entry, cash_exposed_to_visitor, personal_items_at_workplace, food_drink_at_workplace]
+  door_state_trusted: true    # door_open comes from the few-shot door classifier (`door:` above), not from zero-shot detection
   unattended_sec: 3
   safe_open_sec: 4
   door_open_sec: 4
