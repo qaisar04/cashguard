@@ -82,7 +82,7 @@ door:
   prototypes: prototypes/door.npz
   embedding: spatial
   knn_k: 1
-  min_similarity: 0.5
+  min_similarity: 0.8         # measured: same framing as the prototypes 0.91-0.99, other framings/rooms 0.70-0.77 -> abstain
   smooth_frames: 3
   anchor:
     # OWLv2 cannot localise the door panel on this footage ("a glass door" latches onto the neighbouring glass-wall
