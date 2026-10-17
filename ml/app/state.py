@@ -54,6 +54,10 @@ def build_observers(settings: Settings, cfg: PipelineConfig) -> list[Observer]:
         return [StubObserver(settings.stub_fixture)]
     if settings.observer == OBSERVER_DETECTOR:
         observers = _build_detector_observers(cfg)
+        if cfg.machine.enabled:
+            from pipeline.observers.machine import MachineObserver
+
+            observers.append(MachineObserver(cfg.machine))
         if cfg.vlm.enabled:
             vlm = _build_vlm_observer(cfg)
             if vlm is not None:

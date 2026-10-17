@@ -16,6 +16,7 @@ from pipeline.observers.base import (
     KIND_MONITOR,
     KIND_PERSON,
     KIND_PERSONAL_ITEM,
+    KIND_SAFE_ATTENDED,
     KIND_SAFE_OPEN,
     SCREEN_UNKNOWN,
     Observation,
@@ -37,6 +38,7 @@ class Person:
     first_seen: float
     counted: bool = True
     entered: bool = False
+    at_counter: bool = False
     cashier: bool = False
 
 
@@ -51,9 +53,11 @@ class SecondState:
     personal_items_on_desk: int = 0
     drinks_on_desk: int = 0
     safe_open: bool = False
+    safe_attended: bool = False  # open safe with a person handling it (loading / taking out)
     safe_center: Point | None = None
     person_at_safe: bool = False
     door_open: bool = False
+    cash_with_visitor: bool = False  # a cash bundle lies closer to a visitor than to the cashier (handed over / brought)
     actions: list[str] = field(default_factory=list)
 
     def has_action(self, *actions: str) -> bool:
@@ -62,6 +66,10 @@ class SecondState:
     @property
     def cashier_present(self) -> bool:
         return any(p.at_seat for p in self.persons)
+
+    @property
+    def visitors_at_counter(self) -> list[Person]:
+        return [p for p in self.visitors if p.at_counter]
 
     @property
     def visitors(self) -> list[Person]:
@@ -167,6 +175,7 @@ def _state_at(ts: float, obs: list[Observation], neighbours: list[Observation], 
                 in_door=zones.in_door(c),
                 first_seen=track.first_ts,
                 entered=track.entered,
+                at_counter=zones.at_counter(c),
                 cashier=cashier,
             )
         )
@@ -185,6 +194,8 @@ def _state_at(ts: float, obs: list[Observation], neighbours: list[Observation], 
         # the cashier seat is next to the safe: only someone standing at it (not seated at the desk) counts as "at the safe"
         state.person_at_safe = any(zones.near(p.center, state.safe_center) and not p.at_seat for p in state.persons)
     state.door_open = any(o.kind == KIND_DOOR_OPEN and zones.in_door(center(o.box)) for o in obs)
+    state.safe_attended = any(o.kind == KIND_SAFE_ATTENDED for o in obs)
+    state.cash_with_visitor = _cash_with_visitor(state, obs, zones)
     return state
 
 
@@ -206,3 +217,19 @@ def _near_cashier(p: Point, state: SecondState, zones: Zones) -> bool:
     if not zones.on_desk(p):
         return False
     return any(person.at_seat and distance(p, person.center, zones.aspect) <= zones.cashier_radius for person in state.persons)
+
+
+def _cash_with_visitor(state: SecondState, obs: list[Observation], zones: Zones) -> bool:
+    cashiers = [p.center for p in state.persons if p.at_seat]
+    visitors = [p.center for p in state.visitors]
+    if not visitors:
+        return False
+    for o in obs:
+        if o.kind != KIND_CASH:
+            continue
+        c = center(o.box)
+        to_visitor = min(distance(c, v, zones.aspect) for v in visitors)
+        to_cashier = min((distance(c, k, zones.aspect) for k in cashiers), default=float("inf"))
+        if to_visitor < to_cashier:
+            return True
+    return False

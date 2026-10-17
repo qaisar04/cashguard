@@ -20,7 +20,8 @@ GLASS_POLY = [[0.0, 0.0], [0.15, 0.0], [0.15, 0.60], [0.0, 0.60]]
 def rules_cfg(**overrides) -> RulesConfig:
     base = dict(enabled=ENABLED, door_state_trusted=True, unattended_sec=3, safe_open_sec=4, door_open_sec=4, personal_items_sec=4, food_drink_sec=4,
                 min_presence_sec=3, merge_gap_sec=10, max_events=5,
-                machine_lookaround_sec=15, recount_lookback_sec=60, collector_leave_sec=12, client_gone_sec=3)
+                machine_lookaround_sec=15, recount_lookback_sec=60, collector_leave_sec=12, client_gone_sec=6,
+                handover_min_sec=1, counting_alone_min_sec=2)
     base.update(overrides)
     return RulesConfig(**base)
 
@@ -40,14 +41,16 @@ def person(track_id: int, where, first_seen: float = 0.0, entered: bool | None =
     z = zones()
     cashier = z.is_cashier(track_id)
     return Person(track_id=track_id, center=where, at_seat=cashier and z.at_cashier_seat(where), in_door=z.in_door(where),
-                  first_seen=first_seen, entered=(first_seen > 0) if entered is None else entered, cashier=cashier)
+                  first_seen=first_seen, entered=(first_seen > 0) if entered is None else entered, cashier=cashier,
+                  at_counter=z.at_counter(where))
 
 
 def state(t: float, persons=(), screen=SCREEN_UNKNOWN, cash=0, bags=0, safe_open=False, person_at_safe=False, door_open=False,
-          personal_items=0, drinks=0, actions=()) -> SecondState:
+          personal_items=0, drinks=0, actions=(), safe_attended=False, cash_with_visitor=False) -> SecondState:
     return SecondState(t=float(t), persons=list(persons), screen_state=screen, monitor_visible=True, cash_on_desk=cash,
                        bags_on_desk=bags, personal_items_on_desk=personal_items, drinks_on_desk=drinks, safe_open=safe_open, safe_center=(0.8, 0.5) if safe_open else None,
-                       person_at_safe=person_at_safe, door_open=door_open, actions=list(actions))
+                       person_at_safe=person_at_safe, door_open=door_open, actions=list(actions), safe_attended=safe_attended,
+                       cash_with_visitor=cash_with_visitor)
 
 
 def timeline(states: list[SecondState], tracks: list[Track] | None = None) -> Timeline:

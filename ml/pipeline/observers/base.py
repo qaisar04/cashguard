@@ -15,6 +15,8 @@ KIND_DOOR_OPEN = "door_open"
 KIND_PERSONAL_ITEM = "personal_item"
 KIND_DRINK = "drink"
 KIND_GLASS = "glass"
+KIND_MACHINE = "machine"
+KIND_SAFE_ATTENDED = "safe_attended"
 KIND_ACTION = "action"
 
 ATTR_SCREEN_STATE = "screen_state"

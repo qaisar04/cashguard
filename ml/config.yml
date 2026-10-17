@@ -30,6 +30,7 @@ detectors:
     frame_stride: 2           # OWLv2 is the slowest stage (~0.35 s/frame); its targets are static, so every 2nd second is enough
     score_threshold: 0.27
     group_thresholds:
+      machine: 0.2
       personal_item: 0.33   # a worn jacket scores up to 0.28, a handbag on the desk 0.35-0.46
       drink: 0.3
     queries:
@@ -38,6 +39,7 @@ detectors:
       personal_item: ["a handbag", "a purse", "a coat", "a jacket"]
       drink: ["a coffee cup", "a paper cup", "a mug"]
       glass: ["a glass wall", "a glass partition", "a glass door"]   # calibrates zones.door / zones.glass per video
+      machine: ["a banknote counting machine", "a money counting machine", "a currency counter"]   # scores ~0.27; median box per video
 
 screen:
   enabled: true
@@ -100,7 +102,9 @@ zones:
   desk_radius: 0.30         # around the monitor: desk surface where cash/bags lie
   seat_radius: 0.08         # around the seat: the cashier on her chair; also how close a re-tracked person must settle
                             # to become the cashier again (a client stands >= 0.14 from the seat; the door is ~0.1 above it)
-  seat_settle_sec: 2.0      # a re-tracked person must stay at the seat this long (walking past it on the way out is not settling)
+  seat_settle_sec: 2.0
+      # a re-tracked person must stay at the seat this long (walking past it on the way out is not settling)
+  counter_radius: 0.20      # a visitor this close to the cashier seat is at the counter; farther = walking through the room
   safe_radius: 0.18         # around an open safe: person "at the safe"
   # Fallback polygons (normalized), used when the glazing is not detected; pick coordinates with scripts/extract_frame.py.
   door: [[0.0, 0.0], [0.50, 0.0], [0.50, 0.45], [0.0, 0.55]]   # entrance area: door opening + glass wall
@@ -112,6 +116,10 @@ zones:
     min_frames: 3
     edge_pane_max_fraction: 0.75
     pad: 0.02
+
+machine:
+  enabled: true
+  activity_threshold: 5.0     # mean |frame diff| inside the machine box between sampled frames: rest 1-2, counting 7-33
 
 person_verifier:
   # CLIP vote on each person crop; a majority "reflection"/"outside" vote vetoes a mid-video track (never promotes).
@@ -168,10 +176,12 @@ rules:
   merge_gap_sec: 10
   max_events: 5
   # VLM-action rules (no-ops while vlm.enabled is false)
+  handover_min_sec: 1         # cash must sit on the visitor's side for at least this long (a hand passing over does not count)
+  counting_alone_min_sec: 2
   machine_lookaround_sec: 15
   recount_lookback_sec: 60
   collector_leave_sec: 12
-  client_gone_sec: 3
+  client_gone_sec: 6          # the visitor was at the counter this recently -> the count is of HIS cash
 
 evidence:
   frames: 3

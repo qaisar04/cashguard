@@ -84,6 +84,7 @@ class ZonesConfig(BaseModel):
     desk_radius: float = Field(gt=0)
     seat_radius: float = Field(gt=0, default=0.08)
     seat_settle_sec: float = Field(ge=0, default=2.0)
+    counter_radius: float = Field(gt=0, default=0.20, description="visitor within this distance of the cashier seat is at the counter")
     safe_radius: float = Field(gt=0)
     door: list[list[float]] = Field(min_length=3)
     glass: list[list[float]] = Field(min_length=3)
@@ -98,6 +99,11 @@ class TrackingConfig(BaseModel):
     reflection_min_motion: float = Field(ge=0)
     edge_margin: float = Field(ge=0, le=0.5)
     inside_vote_ratio: float = Field(ge=0, le=1)
+
+
+class MachineConfig(BaseModel):
+    enabled: bool = True
+    activity_threshold: float = Field(gt=0, default=5.0, description="mean |frame diff| inside the machine box; rest 1-2, counting 7-33")
 
 
 class PersonVerifierConfig(BaseModel):
@@ -136,6 +142,8 @@ class RulesConfig(BaseModel):
     min_presence_sec: float = Field(ge=0)
     merge_gap_sec: float = Field(ge=0)
     max_events: int = Field(gt=0)
+    handover_min_sec: float = Field(ge=0, default=1.0)
+    counting_alone_min_sec: float = Field(ge=0, default=2.0)
     machine_lookaround_sec: float = Field(ge=0, default=15.0, description="hand counting this close to machine counting is a pre-count, not a violation")
     recount_lookback_sec: float = Field(ge=0, default=60.0, description="counting this long before cash goes into the safe counts as a recount")
     collector_leave_sec: float = Field(ge=0, default=12.0, description="a collector gone this soon after dropping the bag left without a check")
@@ -156,6 +164,7 @@ class PipelineConfig(BaseModel):
     safe: StateConfig
     door: StateConfig
     person_verifier: PersonVerifierConfig
+    machine: MachineConfig = Field(default_factory=MachineConfig)
     zones: ZonesConfig
     tracking: TrackingConfig
     rules: RulesConfig

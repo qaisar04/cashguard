@@ -11,6 +11,7 @@ from pipeline.observers.base import KIND_GLASS, KIND_MONITOR, KIND_PERSON, Obser
 log = logging.getLogger(__name__)
 
 ANCHOR_CELL = 0.05
+DEFAULT_COUNTER_RADIUS = 0.20
 DEFAULT_SEAT_RADIUS = 0.08
 DEFAULT_SEAT_SETTLE_SEC = 2.0
 EDGE_TOLERANCE = 0.03
@@ -30,6 +31,7 @@ class Zones:
     source: str = ZONE_SOURCE_CONFIG
     seat_radius: float = DEFAULT_SEAT_RADIUS
     seat_settle_sec: float = DEFAULT_SEAT_SETTLE_SEC
+    counter_radius: float = DEFAULT_COUNTER_RADIUS
     seat: Point | None = None
     cashier_ids: frozenset[int] = frozenset()
 
@@ -38,6 +40,11 @@ class Zones:
 
     def is_cashier(self, track_id: int) -> bool:
         return track_id in self.cashier_ids
+
+    def at_counter(self, p: Point) -> bool:
+        """A visitor standing at the desk opposite the cashier (handover distance), as opposed to walking through the room."""
+        anchor = self.seat if self.seat is not None else self.monitor
+        return anchor is not None and distance(p, anchor, self.aspect) <= self.counter_radius
 
     def seat_distance(self, p: Point) -> float | None:
         return None if self.monitor is None else distance(p, self.monitor, self.aspect)
@@ -96,6 +103,7 @@ def build_zones(cfg: ZonesConfig, observations: list[Observation], aspect: float
         source=source,
         seat_radius=cfg.seat_radius,
         seat_settle_sec=cfg.seat_settle_sec,
+        counter_radius=cfg.counter_radius,
     )
 
 

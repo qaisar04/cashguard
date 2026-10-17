@@ -11,7 +11,7 @@ from pipeline.anchor import locate_anchor
 from pipeline.clip_zero_shot import ClipZeroShot, crop
 from pipeline.crop_state import STATE_UNKNOWN, CropStateClassifier, load_prototypes
 from pipeline.detectors.base import Detector
-from pipeline.observers.base import STATE_ATTENDED, STATE_CLOSED, STATE_OPEN, Observation
+from pipeline.observers.base import KIND_SAFE_ATTENDED, KIND_SAFE_OPEN, STATE_ATTENDED, STATE_CLOSED, STATE_OPEN, Observation
 from pipeline.video import Frame
 
 log = logging.getLogger(__name__)
@@ -46,6 +46,9 @@ class StateObserver:
             labels = smooth(labels, probe.cfg.smooth_frames)
             open_frames = [frame for frame, label in zip(frames, labels) if label == STATE_OPEN]
             observations.extend(Observation(ts=f.ts, kind=probe.kind, box=box, score=1.0) for f in open_frames)
+            if probe.kind == KIND_SAFE_OPEN:
+                attended = [frame for frame, label in zip(frames, labels) if label == STATE_ATTENDED]
+                observations.extend(Observation(ts=f.ts, kind=KIND_SAFE_ATTENDED, box=box, score=1.0) for f in attended)
             log.info("%s state: %s", probe.name, dict(Counter(labels)))
         return observations
 
