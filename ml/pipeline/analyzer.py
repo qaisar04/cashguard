@@ -9,14 +9,14 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from app.settings import PipelineConfig, VideoConfig
-from pipeline.evidence import EvidenceBuilder
+from pipeline.evidence import EvidenceBuilder, PersonMarks, person_marks
 from pipeline.observers.base import KIND_PERSON, Observation, Observer
 from pipeline.rules.base import Candidate
 from pipeline.rules.engine import RuleEngine, default_rules
 from pipeline.timeline import build_timeline
-from pipeline.tracking import annotate_tracks, track
-from pipeline.video import probe, sample_frames
-from pipeline.zones import build_zones
+from pipeline.tracking import Track, annotate_tracks, track
+from pipeline.video import Frame, probe, sample_frames
+from pipeline.zones import Zones, build_zones
 from rules.catalog import RuleCatalog
 
 log = logging.getLogger(__name__)
@@ -62,6 +62,14 @@ class AnalysisMeta:
 DIAGNOSTICS_DIR = "diagnostics"
 
 
+@dataclass(frozen=True)
+class Analysis:
+    events: list[AnalysisEvent]
+    persons: PersonMarks
+    zones: Zones
+    tracks: list[Track]
+
+
 class Analyzer:
     def __init__(self, cfg: PipelineConfig, observers: list[Observer], catalog: RuleCatalog, diagnostics_dir: Path | None = None):
         self.cfg = cfg
@@ -81,13 +89,7 @@ class Analyzer:
             for observer in self.observers:
                 observations.extend(observer.observe(frames))
             aspect = info.width / info.height if info.height else 1.0
-            zones = build_zones(self.cfg.zones, observations, aspect)
-            persons = [o for o in observations if o.kind == KIND_PERSON]
-            tracks = track(persons, self.cfg.tracking.iou_threshold, self.cfg.tracking.max_missing_sec)
-            annotate_tracks(tracks, zones, self.cfg.tracking)
-            timeline = build_timeline([f.ts for f in frames], observations, tracks, zones)
-            candidates = self.engine.run(timeline)
-            events = [self._to_event(c, frames, observations) for c in candidates]
+            analysis = self.analyze_observations(frames, observations, aspect)
         meta = AnalysisMeta(
             frames=len(frames),
             sampled_fps=fps,
@@ -95,11 +97,11 @@ class Analyzer:
             observations=len(observations),
             observers=[o.name for o in self.observers],
             elapsed_ms=int((time.monotonic() - started) * 1000),
-            tracks=[_track_diagnostics(t) for t in tracks],
+            tracks=[_track_diagnostics(t) for t in analysis.tracks],
         )
-        log.info("analyzed %s: %d event(s) in %d ms", video_path.name, len(events), meta.elapsed_ms)
-        self._write_diagnostics(video_path, events, meta)
-        return events, meta
+        log.info("analyzed %s: %d event(s) in %d ms", video_path.name, len(analysis.events), meta.elapsed_ms)
+        self._write_diagnostics(video_path, analysis.events, meta)
+        return analysis.events, meta
 
     def _write_diagnostics(self, video_path: Path, events: list["AnalysisEvent"], meta: AnalysisMeta) -> None:
         """Keyed by the file's sha256 so an evaluator can find the record for an uploaded copy of a known video."""
@@ -113,14 +115,26 @@ class Analyzer:
         }
         (self.diagnostics_dir / f"{_sha256(video_path)}.json").write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
 
-    def _to_event(self, c: Candidate, frames, observations) -> AnalysisEvent:
+    def analyze_observations(self, frames: list[Frame], observations: list[Observation], aspect: float) -> Analysis:
+        """Everything after detection: tracking, zones, rules and evidence rendering for already observed frames."""
+        zones = build_zones(self.cfg.zones, observations, aspect)
+        persons = [o for o in observations if o.kind == KIND_PERSON]
+        tracks = track(persons, self.cfg.tracking.iou_threshold, self.cfg.tracking.max_missing_sec)
+        annotate_tracks(tracks, zones, self.cfg.tracking)
+        marks = person_marks(tracks, zones)
+        timeline = build_timeline([f.ts for f in frames], observations, tracks, zones)
+        candidates = self.engine.run(timeline)
+        events = [self._to_event(c, frames, observations, marks) for c in candidates]
+        return Analysis(events=events, persons=marks, zones=zones, tracks=tracks)
+
+    def _to_event(self, c: Candidate, frames: list[Frame], observations: list[Observation], marks: PersonMarks) -> AnalysisEvent:
         rule = self.catalog.get(c.type_id)
         return AnalysisEvent(
             type_id=c.type_id,
             type_name=rule.name_ru,
             timecode_sec=round(c.onset, 2),
             description=f"{c.description} {rule.reference.citation}",
-            evidence=self.evidence.build(frames, observations, c.evidence_ts),
+            evidence=self.evidence.build(frames, observations, c.evidence_ts, marks),
             document=rule.reference.document,
             clause=rule.reference.clause,
             url=rule.reference.url,

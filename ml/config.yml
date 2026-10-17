@@ -38,6 +38,7 @@ detectors:
       drink: ["a coffee cup", "a paper cup", "a mug"]
       safe_open: ["an open safe", "an open safe door"]
       door_open: ["an open door", "an open doorway"]
+      glass: ["a glass wall", "a glass partition", "a glass door"]   # calibrates zones.door / zones.glass per video
 
 screen:
   enabled: true
@@ -59,8 +60,16 @@ zones:
   cashier_radius: 0.16      # around the monitor: the cashier's seat
   desk_radius: 0.30         # around the monitor: desk surface where cash/bags lie
   safe_radius: 0.18         # around an open safe: person "at the safe"
-  door: [[0.0, 0.0], [0.50, 0.0], [0.50, 0.45], [0.0, 0.55]]   # normalized polygon: entrance area (door opening + glass wall)
-  glass: [[0.0, 0.0], [0.15, 0.0], [0.15, 0.60], [0.0, 0.60]]  # glass-wall strip left of the door: reflections / corridor
+  # Fallback polygons (normalized), used when the glazing is not detected; pick coordinates with scripts/extract_frame.py.
+  door: [[0.0, 0.0], [0.50, 0.0], [0.50, 0.45], [0.0, 0.55]]   # entrance area: door opening + glass wall
+  glass: [[0.0, 0.0], [0.22, 0.0], [0.22, 0.55], [0.0, 0.55]]  # glass pane at the frame edge: reflections / corridor people
+  # Per-video calibration from the OWLv2 `glass` boxes: the whole glazing becomes `door`, the pane touching the
+  # frame edge (where the mirror images live) becomes `glass`. Camera angle moves that pane edge between x=0.24 and 0.35.
+  glass_detection:
+    enabled: true
+    min_frames: 3
+    edge_pane_max_fraction: 0.75
+    pad: 0.02
 
 person_verifier:
   # CLIP vote on each person crop; a majority "reflection"/"outside" vote vetoes a mid-video track (never promotes).
