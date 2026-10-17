@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Sequence
+
 import logging
 from collections import Counter
 from dataclasses import dataclass
@@ -36,7 +38,7 @@ class StateObserver:
         self.anchor_detector = anchor_detector
         self.probes = probes
 
-    def observe(self, frames: list[Frame]) -> list[Observation]:
+    def observe(self, frames: list[Frame], prior: Sequence[Observation] = ()) -> list[Observation]:
         observations: list[Observation] = []
         for probe in self.probes:
             box = locate_anchor(self.anchor_detector, frames, probe.cfg.anchor, probe.name, probe.classifier.similarity)
