@@ -1,16 +1,16 @@
 # Acceptance report
 
-Generated 2026-10-17 23:10 — 42 videos via http://localhost:8080; tuned half: odd
+Generated 2026-10-18 03:26 — 42 videos via http://localhost:8080; tuned half: odd
 
 | # | Criterion | Result | Detail |
 |---|---|---|---|
 | 1 | 42/42 done, 0 failed, 0 timeouts | PASS | done 42/42; failed/timeout: - |
 | 2-4 | schema, JPEG, evidence ±5s, Russian description with clause | PASS | all responses valid |
 | 5 | 401 without / with wrong X-API-Key | PASS | no key=401, wrong key=401, wrong key GET=401 |
-| 6 | max processing ≤ 120s | PASS | p50 15s, max 90s (X-14), X-47 44s |
-| 7 | burst of 5 longest within 300s each | PASS | X-14: done in 81s (ok); X-39: done in 127s (ok); X-4: done in 169s (ok); X-47: done in 213s (ok); X-5: done in 255s (ok) |
+| 6 | max processing ≤ 120s | FAIL | p50 27s, max 137s (X-39), X-47 119s |
+| 7 | burst of 5 longest within 300s each | FAIL | X-14: done in 259s (ok); X-39: timeout in 331s (FAIL); X-4: timeout in 330s (FAIL); X-47: timeout in 332s (FAIL); X-5: timeout in 332s (FAIL) |
 | 8 | recall on implemented types ≥ 12/14 | PASS | 12/12 (judged set), all: 16/16 |
-| 9 | clean FP ≤ 2, visitor-type FP = 0 | PASS | FP: X-39; visitor-type: X-39 |
+| 9 | clean FP ≤ 2, visitor-type FP = 0 | PASS | FP: X-27, X-39, X-45; visitor-type: X-39 |
 | 10 | must-pass list | PASS | missed: -; false: - |
 | 11 | timecode ≥70% within ±2s and ≥90% within ±5s | FAIL | ±2s 62%, ±5s 94% (all); judged: ±2s 58%, ±5s 100% |
 | 12 | type accuracy ≥ 80% | PASS | type 100%, family 100% (all); judged type 100% |
@@ -23,7 +23,7 @@ Generated 2026-10-17 23:10 — 42 videos via http://localhost:8080; tuned half: 
 ### All videos
 
 - videos: 42; implemented-type violations: 16, detected: 16 (recall 16/16)
-- clean videos: 20; false positives: 1 (X-39); visitor-type FP: X-39
+- clean videos: 20; false positives: 3 (X-27, X-39, X-45); visitor-type FP: X-39
 - timecode within ±2s: 62%, within ±5s: 94%
 - type accuracy: 100%, family accuracy: 100%
 
@@ -38,9 +38,9 @@ Generated 2026-10-17 23:10 — 42 videos via http://localhost:8080; tuned half: 
 | X-24 | valuables_left_unattended@8.0 | valuables_left_unattended@5.0 | -3.0s |
 | X-26 | valuables_left_unattended@9.0 | valuables_left_unattended@10.03 | +1.0s |
 | X-28 | workstation_unlocked@7.0 | workstation_unlocked@6.05 | -1.0s |
-| X-30 | unauthorized_entry@13.0 | cash_room_door_open@3.01, unauthorized_entry@17.06 | +4.1s |
-| X-32 | cash_room_door_open@5.0 | cash_room_door_open@4.01 | -1.0s |
-| X-33 | cash_room_door_open@6.0 | cash_room_door_open@4.0, unauthorized_entry@11.0 | -2.0s |
+| X-30 | unauthorized_entry@13.0 | cash_room_door_open@4.01, unauthorized_entry@17.06 | +4.1s |
+| X-32 | cash_room_door_open@5.0 | cash_room_door_open@5.02 | +0.0s |
+| X-33 | cash_room_door_open@6.0 | cash_room_door_open@6.0, unauthorized_entry@11.0 | +0.0s |
 | X-38 | cash_exposed_to_visitor@33.0 | cash_exposed_to_visitor@29.03, unauthorized_entry@36.04, cash_exposed_to_visitor@55.06 | +3.0s |
 | X-40 | personal_items_at_workplace@17.0 | personal_items_at_workplace@18.07 | +1.1s |
 | X-46 | food_drink_at_workplace@11.0 | food_drink_at_workplace@10.03 | -1.0s |
@@ -49,7 +49,7 @@ Generated 2026-10-17 23:10 — 42 videos via http://localhost:8080; tuned half: 
 ### Odd video numbers
 
 - videos: 21; implemented-type violations: 4, detected: 4 (recall 4/4)
-- clean videos: 14; false positives: 1 (X-39); visitor-type FP: X-39
+- clean videos: 14; false positives: 3 (X-27, X-39, X-45); visitor-type FP: X-39
 - timecode within ±2s: 75%, within ±5s: 75%
 - type accuracy: 100%, family accuracy: 100%
 
@@ -57,7 +57,7 @@ Generated 2026-10-17 23:10 — 42 videos via http://localhost:8080; tuned half: 
 |---|---|---|---|
 | X-11 | workstation_unlocked@18.0 | workstation_unlocked@16.06 | -1.9s |
 | X-15 | valuables_left_unattended@15.0 | valuables_left_unattended@16.05 | +1.1s |
-| X-33 | cash_room_door_open@6.0 | cash_room_door_open@4.0, unauthorized_entry@11.0 | -2.0s |
+| X-33 | cash_room_door_open@6.0 | cash_room_door_open@6.0, unauthorized_entry@11.0 | +0.0s |
 | X-47 | cash_exposed_to_visitor@68.0 | cash_exposed_to_visitor@60.11 | -7.9s |
 
 ### Even video numbers
@@ -76,8 +76,8 @@ Generated 2026-10-17 23:10 — 42 videos via http://localhost:8080; tuned half: 
 | X-24 | valuables_left_unattended@8.0 | valuables_left_unattended@5.0 | -3.0s |
 | X-26 | valuables_left_unattended@9.0 | valuables_left_unattended@10.03 | +1.0s |
 | X-28 | workstation_unlocked@7.0 | workstation_unlocked@6.05 | -1.0s |
-| X-30 | unauthorized_entry@13.0 | cash_room_door_open@3.01, unauthorized_entry@17.06 | +4.1s |
-| X-32 | cash_room_door_open@5.0 | cash_room_door_open@4.01 | -1.0s |
+| X-30 | unauthorized_entry@13.0 | cash_room_door_open@4.01, unauthorized_entry@17.06 | +4.1s |
+| X-32 | cash_room_door_open@5.0 | cash_room_door_open@5.02 | +0.0s |
 | X-38 | cash_exposed_to_visitor@33.0 | cash_exposed_to_visitor@29.03, unauthorized_entry@36.04, cash_exposed_to_visitor@55.06 | +3.0s |
 | X-40 | personal_items_at_workplace@17.0 | personal_items_at_workplace@18.07 | +1.1s |
 | X-46 | food_drink_at_workplace@11.0 | food_drink_at_workplace@10.03 | -1.0s |
@@ -86,9 +86,9 @@ Generated 2026-10-17 23:10 — 42 videos via http://localhost:8080; tuned half: 
 
 - X-1 (cash_not_machine_verified@22.0): no_violation
 - X-2 (no_client_identification@10.0): no_violation
-- X-13 (unrecounted_cash_to_safe@47.0): no_violation
+- X-13 (unrecounted_cash_to_safe@47.0): unrecounted_cash_to_safe@48.07
 - X-17 (collector_handover_unverified@7.0): no_violation
-- X-34 (counting_not_in_client_presence@13.0): no_violation
+- X-34 (counting_not_in_client_presence@13.0): counting_not_in_client_presence@13.05
 - X-44 (cash_not_machine_verified@16.0): no_violation
 
 ## Person-track diagnostics
@@ -138,6 +138,57 @@ Generated 2026-10-17 23:10 — 42 videos via http://localhost:8080; tuned half: 
 | X-47 | 21 | 0 | 17 | #2 0.77, #4 0.83, #5 0.77, #6 0.66, #7 0.67, #8 0.66, #9 0.60, #10 0.57, #11 0.68, #12 0.59, #13 0.73, #15 0.64, #16 0.85, #17 0.84, #19 0.64, #20 0.66, #21 0.57 |
 | X-48 | 18 | 0 | 12 | #3 0.81, #5 0.76, #6 0.61, #7 0.68, #8 0.60, #9 0.66, #10 0.56, #11 0.59, #12 0.89, #15 0.79, #17 0.84, #18 0.67 |
 
+## Official labels (organiser file: verdict + timecode only)
+
+- videos matched: 42; verdict accuracy 83%
+- violations: 22, detected 18 (recall 82%); clean: 20, false positives 3
+- timecode on detected violations: within ±2s 67%, within ±5s 94%, MAE 4.7s
+
+| video | official label | verdict | signed timecode error |
+|---|---|---|---|
+| X-1 | нарушение @22 | no_violation |  |
+| X-2 | нарушение @10 | no_violation |  |
+| X-3 | — | no_violation |  |
+| X-4 | нарушение @57 | violation | +3.1s |
+| X-5 | — | no_violation |  |
+| X-8 | — | no_violation |  |
+| X-10 | — | no_violation |  |
+| X-11 | нарушение @18 | violation | -1.9s |
+| X-12 | — | no_violation |  |
+| X-13 | нарушение @47 | violation | +1.1s |
+| X-14 | — | no_violation |  |
+| X-15 | нарушение @15 | violation | +1.1s |
+| X-16 | — | no_violation |  |
+| X-17 | нарушение @7 | no_violation |  |
+| X-18 | нарушение @20 | violation | -3.9s |
+| X-19 | — | no_violation |  |
+| X-20 | нарушение @5 | violation | +0.0s |
+| X-21 | — | no_violation |  |
+| X-22 | нарушение @14 | violation | +0.1s |
+| X-23 | — | no_violation |  |
+| X-24 | нарушение @8 | violation | -3.0s |
+| X-25 | — | no_violation |  |
+| X-26 | нарушение @9 | violation | +1.0s |
+| X-27 | — | violation |  |
+| X-28 | нарушение @7 | violation | -1.0s |
+| X-29 | — | no_violation |  |
+| X-30 | нарушение @13 | violation | +4.1s |
+| X-31 | — | no_violation |  |
+| X-32 | нарушение @5 | violation | +0.0s |
+| X-33 | нарушение @6 | violation | +0.0s |
+| X-34 | нарушение @13 | violation | +0.1s |
+| X-35 | — | no_violation |  |
+| X-37 | — | no_violation |  |
+| X-38 | нарушение @33 | violation | +3.0s |
+| X-39 | — | violation |  |
+| X-40 | нарушение @17 | violation | +1.1s |
+| X-43 | — | no_violation |  |
+| X-44 | нарушение @16 | no_violation |  |
+| X-45 | — | violation |  |
+| X-46 | нарушение @11 | violation | -1.0s |
+| X-47 | нарушение @1 | violation | +59.1s |
+| X-48 | — | no_violation |  |
+
 ## Config change log
 
 | # | when | change | reason | effect |
@@ -154,9 +205,9 @@ Generated 2026-10-17 23:10 — 42 videos via http://localhost:8080; tuned half: 
 
 - X-1: MISS (not implemented type): label cash_not_machine_verified@22.0, predicted -
 - X-2: MISS (not implemented type): label no_client_identification@10.0, predicted -
-- X-13: MISS (not implemented type): label unrecounted_cash_to_safe@47.0, predicted -
 - X-17: MISS (not implemented type): label collector_handover_unverified@7.0, predicted -
-- X-34: MISS (not implemented type): label counting_not_in_client_presence@13.0, predicted -
+- X-27: FALSE POSITIVE on clean clip: predicted unrecounted_cash_to_safe@12.03
 - X-39: FALSE POSITIVE on clean clip: predicted unauthorized_entry@50.06
 - X-44: MISS (not implemented type): label cash_not_machine_verified@16.0, predicted -
+- X-45: FALSE POSITIVE on clean clip: predicted counting_not_in_client_presence@13.05
 - X-47: TIMECODE error -7.9s: label cash_exposed_to_visitor@68.0, predicted cash_exposed_to_visitor@60.11

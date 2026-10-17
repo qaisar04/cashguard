@@ -143,6 +143,8 @@ class RulesConfig(BaseModel):
     merge_gap_sec: float = Field(ge=0)
     max_events: int = Field(gt=0)
     handover_min_sec: float = Field(ge=0, default=1.0)
+    client_served_min_sec: float = Field(ge=0, default=3.0, description="seconds a client must stand at the counter to count as served")
+    cash_on_desk_min_sec: float = Field(ge=0, default=3.0, description="seconds cash must lie on the desk before a safe interaction")
     counting_alone_min_sec: float = Field(ge=0, default=2.0)
     machine_lookaround_sec: float = Field(ge=0, default=15.0, description="hand counting this close to machine counting is a pre-count, not a violation")
     recount_lookback_sec: float = Field(ge=0, default=60.0, description="counting this long before cash goes into the safe counts as a recount")

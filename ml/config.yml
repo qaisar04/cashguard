@@ -30,7 +30,7 @@ detectors:
     frame_stride: 2           # OWLv2 is the slowest stage (~0.35 s/frame); its targets are static, so every 2nd second is enough
     score_threshold: 0.27
     group_thresholds:
-      machine: 0.2
+      machine: 0.25        # measured 0.26-0.31; a lower value would drag the detector's global candidate threshold down
       personal_item: 0.33   # a worn jacket scores up to 0.28, a handbag on the desk 0.35-0.46
       drink: 0.3
     queries:
@@ -176,6 +176,8 @@ rules:
   merge_gap_sec: 10
   max_events: 5
   # VLM-action rules (no-ops while vlm.enabled is false)
+  client_served_min_sec: 3    # a one-frame figure in the corridor is not a client who was served
+  cash_on_desk_min_sec: 3     # bundles must actually lie on the desk before a safe interaction counts as loading it
   handover_min_sec: 1         # cash must sit on the visitor's side for at least this long (a hand passing over does not count)
   counting_alone_min_sec: 2
   machine_lookaround_sec: 15

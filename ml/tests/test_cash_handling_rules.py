@@ -30,6 +30,13 @@ def test_counting_after_client_left_fires():
     assert len(found) == 1 and found[0].onset == 10.0
 
 
+def test_one_frame_figure_is_not_a_served_client():
+    # a corridor silhouette counted as a visitor for a single second must not make the later count a violation (X-45)
+    states = [state(t, [CASHIER]) for t in range(0, 9)] + [state(9, [CASHIER, CLIENT])]
+    states += [state(t, [CASHIER], actions=MACHINE) for t in range(10, 15)]
+    assert CountingNotInClientPresenceRule().evaluate(timeline(states), rules_cfg()) == []
+
+
 def test_counting_with_client_present_is_clean():
     states = [state(t, [CASHIER, CLIENT], actions=MACHINE) for t in range(0, 10)]
     assert CountingNotInClientPresenceRule().evaluate(timeline(states), rules_cfg()) == []
@@ -42,13 +49,26 @@ def test_counting_long_after_client_left_is_not_this_type():
 
 
 def test_bag_cash_to_safe_without_count_fires():
-    states = [state(t, [CASHIER], bags=1) for t in range(0, 10)] + [state(t, [CASHIER], safe_attended=True) for t in range(10, 14)]
+    states = [state(t, [CASHIER], bags=1, cash=1) for t in range(0, 10)] + [state(t, [CASHIER], safe_attended=True) for t in range(10, 14)]
+    states += [state(t, [CASHIER]) for t in range(14, 20)]
     found = UnrecountedCashToSafeRule().evaluate(timeline(states), rules_cfg())
     assert len(found) == 1 and found[0].onset == 10.0
 
 
 def test_cash_to_safe_after_count_is_clean():
-    states = [state(t, [CASHIER], bags=1, actions=MACHINE) for t in range(0, 10)] + [state(t, [CASHIER], safe_attended=True) for t in range(10, 14)]
+    states = [state(t, [CASHIER], bags=1, cash=1, actions=MACHINE) for t in range(0, 10)] + [state(t, [CASHIER], safe_attended=True) for t in range(10, 14)]
+    assert UnrecountedCashToSafeRule().evaluate(timeline(states), rules_cfg()) == []
+
+
+def test_taking_something_out_of_the_safe_is_clean():
+    # nothing was lying on the desk beforehand: the teller is taking a folder out, not loading bundles in (X-27)
+    states = [state(t, [CASHIER]) for t in range(0, 10)] + [state(t, [CASHIER], safe_attended=True) for t in range(10, 14)]
+    assert UnrecountedCashToSafeRule().evaluate(timeline(states), rules_cfg()) == []
+
+
+def test_cash_still_on_desk_after_the_safe_is_clean():
+    states = [state(t, [CASHIER], cash=1) for t in range(0, 10)] + [state(t, [CASHIER], safe_attended=True) for t in range(10, 14)]
+    states += [state(t, [CASHIER], cash=1) for t in range(14, 20)]
     assert UnrecountedCashToSafeRule().evaluate(timeline(states), rules_cfg()) == []
 
 

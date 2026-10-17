@@ -21,7 +21,7 @@ def rules_cfg(**overrides) -> RulesConfig:
     base = dict(enabled=ENABLED, door_state_trusted=True, unattended_sec=3, safe_open_sec=4, door_open_sec=4, personal_items_sec=4, food_drink_sec=4,
                 min_presence_sec=3, merge_gap_sec=10, max_events=5,
                 machine_lookaround_sec=15, recount_lookback_sec=60, collector_leave_sec=12, client_gone_sec=6,
-                handover_min_sec=1, counting_alone_min_sec=2)
+                handover_min_sec=1, counting_alone_min_sec=2, client_served_min_sec=3, cash_on_desk_min_sec=3)
     base.update(overrides)
     return RulesConfig(**base)
 

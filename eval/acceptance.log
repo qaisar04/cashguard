@@ -1,55 +1,55 @@
-X-1: done 16s verdict=no_violation -
-X-2: done 26s verdict=no_violation -
+X-1: done 18s verdict=no_violation -
+X-2: done 12s verdict=no_violation -
 X-3: done 12s verdict=no_violation -
-X-4: done 44s verdict=violation cash_exposed_to_visitor@60.11
-X-5: done 44s verdict=no_violation -
-X-8: done 22s verdict=no_violation -
-X-10: done 10s verdict=no_violation -
-X-11: done 16s verdict=violation workstation_unlocked@16.06
-X-12: done 24s verdict=no_violation -
-X-13: done 38s verdict=no_violation -
-X-14: done 90s verdict=no_violation -
-X-15: done 14s verdict=violation valuables_left_unattended@16.05
-X-16: done 16s verdict=no_violation -
-X-17: done 16s verdict=no_violation -
-X-18: done 14s verdict=violation unauthorized_entry@16.05
-X-19: done 36s verdict=no_violation -
-X-20: done 8s verdict=violation safe_left_open@5.0
-X-21: done 12s verdict=no_violation -
-X-22: done 14s verdict=violation workstation_unlocked@14.07
-X-23: done 12s verdict=no_violation -
-X-24: done 10s verdict=violation valuables_left_unattended@5.0
-X-25: done 20s verdict=no_violation -
-X-26: done 12s verdict=violation valuables_left_unattended@10.03
-X-27: done 18s verdict=no_violation -
-X-28: done 12s verdict=violation workstation_unlocked@6.05
-X-29: done 12s verdict=no_violation -
-X-30: done 12s verdict=violation cash_room_door_open@3.01; unauthorized_entry@17.06
-X-31: done 14s verdict=no_violation -
-X-32: done 14s verdict=violation cash_room_door_open@4.01
-X-33: done 10s verdict=violation cash_room_door_open@4.0; unauthorized_entry@11.0
-X-34: done 12s verdict=no_violation -
-X-35: done 34s verdict=no_violation -
-X-37: done 12s verdict=no_violation -
-X-38: done 40s verdict=violation cash_exposed_to_visitor@29.03; unauthorized_entry@36.04; cash_exposed_to_visitor@55.06
-X-39: done 54s verdict=violation unauthorized_entry@50.06
-X-40: done 24s verdict=violation personal_items_at_workplace@18.07
-X-43: done 14s verdict=no_violation -
-X-44: done 14s verdict=no_violation -
-X-45: done 20s verdict=no_violation -
-X-46: done 12s verdict=violation food_drink_at_workplace@10.03
-X-47: done 44s verdict=violation cash_exposed_to_visitor@60.11
-X-48: done 44s verdict=no_violation -
+X-4: done 42s verdict=violation cash_exposed_to_visitor@60.11
+X-5: done 50s verdict=no_violation -
+X-8: done 26s verdict=no_violation -
+X-10: done 14s verdict=no_violation -
+X-11: done 22s verdict=violation workstation_unlocked@16.06
+X-12: done 36s verdict=no_violation -
+X-13: done 56s verdict=violation unrecounted_cash_to_safe@48.07
+X-14: done 127s verdict=no_violation -
+X-15: done 24s verdict=violation valuables_left_unattended@16.05
+X-16: done 26s verdict=no_violation -
+X-17: done 18s verdict=no_violation -
+X-18: done 26s verdict=violation unauthorized_entry@16.05
+X-19: done 64s verdict=no_violation -
+X-20: done 16s verdict=violation safe_left_open@5.0
+X-21: done 24s verdict=no_violation -
+X-22: done 26s verdict=violation workstation_unlocked@14.07
+X-23: done 24s verdict=no_violation -
+X-24: done 16s verdict=violation valuables_left_unattended@5.0
+X-25: done 38s verdict=no_violation -
+X-26: done 22s verdict=violation valuables_left_unattended@10.03
+X-27: done 36s verdict=violation unrecounted_cash_to_safe@12.03
+X-28: done 24s verdict=violation workstation_unlocked@6.05
+X-29: done 26s verdict=no_violation -
+X-30: done 28s verdict=violation cash_room_door_open@4.01; unauthorized_entry@17.06
+X-31: done 32s verdict=no_violation -
+X-32: done 30s verdict=violation cash_room_door_open@5.02
+X-33: done 24s verdict=violation cash_room_door_open@6.0; unauthorized_entry@11.0
+X-34: done 24s verdict=violation counting_not_in_client_presence@13.05
+X-35: done 74s verdict=no_violation -
+X-37: done 24s verdict=no_violation -
+X-38: done 84s verdict=violation cash_exposed_to_visitor@29.03; unauthorized_entry@36.04; cash_exposed_to_visitor@55.06
+X-39: done 137s verdict=violation unauthorized_entry@50.06
+X-40: done 42s verdict=violation personal_items_at_workplace@18.07
+X-43: done 38s verdict=no_violation -
+X-44: done 32s verdict=no_violation -
+X-45: done 50s verdict=violation counting_not_in_client_presence@13.05
+X-46: done 32s verdict=violation food_drink_at_workplace@10.03
+X-47: done 119s verdict=violation cash_exposed_to_visitor@60.11
+X-48: done 121s verdict=no_violation -
 
 | # | Criterion | Result | Detail |
 |---|---|---|---|
 | 1 | 42/42 done, 0 failed, 0 timeouts | PASS | done 42/42; failed/timeout: - |
 | 2-4 | schema, JPEG, evidence ±5s, Russian description with clause | PASS | all responses valid |
 | 5 | 401 without / with wrong X-API-Key | PASS | no key=401, wrong key=401, wrong key GET=401 |
-| 6 | max processing ≤ 120s | PASS | p50 15s, max 90s (X-14), X-47 44s |
-| 7 | burst of 5 longest within 300s each | PASS | X-14: done in 81s (ok); X-39: done in 127s (ok); X-4: done in 169s (ok); X-47: done in 213s (ok); X-5: done in 255s (ok) |
+| 6 | max processing ≤ 120s | FAIL | p50 27s, max 137s (X-39), X-47 119s |
+| 7 | burst of 5 longest within 300s each | FAIL | X-14: done in 259s (ok); X-39: timeout in 331s (FAIL); X-4: timeout in 330s (FAIL); X-47: timeout in 332s (FAIL); X-5: timeout in 332s (FAIL) |
 | 8 | recall on implemented types ≥ 12/14 | PASS | 12/12 (judged set), all: 16/16 |
-| 9 | clean FP ≤ 2, visitor-type FP = 0 | PASS | FP: X-39; visitor-type: X-39 |
+| 9 | clean FP ≤ 2, visitor-type FP = 0 | PASS | FP: X-27, X-39, X-45; visitor-type: X-39 |
 | 10 | must-pass list | PASS | missed: -; false: - |
 | 11 | timecode ≥70% within ±2s and ≥90% within ±5s | FAIL | ±2s 62%, ±5s 94% (all); judged: ±2s 58%, ±5s 100% |
 | 12 | type accuracy ≥ 80% | PASS | type 100%, family 100% (all); judged type 100% |

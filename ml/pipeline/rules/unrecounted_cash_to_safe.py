@@ -19,7 +19,12 @@ class UnrecountedCashToSafeRule:
             states = timeline.states[run[0] : run[1]]
             onset, end = states[0].t, states[-1].t
             earlier = [s for s in timeline.states if onset - cfg.recount_lookback_sec <= s.t < onset]
-            if not any(s.cash_on_desk or s.bags_on_desk for s in earlier):
+            later = [s for s in timeline.states if s.t > end]
+            # the bundles must have been lying on the desk right before and be gone afterwards: that is what "put into
+            # the safe" looks like. Taking a folder out of the safe (X-27) has no cash on the desk before it.
+            if sum(1 for s in earlier if s.cash_on_desk) < cfg.cash_on_desk_min_sec:
+                continue
+            if later and any(s.cash_on_desk for s in later[: int(cfg.cash_on_desk_min_sec)]):
                 continue
             if any(s.has_action(ACTION_MACHINE_COUNTING) for s in earlier):
                 continue
