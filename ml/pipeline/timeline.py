@@ -3,14 +3,16 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Callable
 
-from pipeline.geometry import Point, center
+from pipeline.geometry import Box, Point, center, distance, iou
 from pipeline.observers.base import (
     ATTR_SCREEN_STATE,
     KIND_BAG,
     KIND_CASH,
     KIND_DOOR_OPEN,
+    KIND_DRINK,
     KIND_MONITOR,
     KIND_PERSON,
+    KIND_PERSONAL_ITEM,
     KIND_SAFE_OPEN,
     SCREEN_UNKNOWN,
     Observation,
@@ -18,6 +20,7 @@ from pipeline.observers.base import (
 from pipeline.tracking import Track
 from pipeline.zones import Zones
 
+SAME_OBJECT_IOU = 0.3
 ROLE_CASHIER = "cashier"
 ROLE_VISITOR = "visitor"
 
@@ -41,6 +44,8 @@ class SecondState:
     monitor_visible: bool = False
     cash_on_desk: int = 0
     bags_on_desk: int = 0
+    personal_items_on_desk: int = 0
+    drinks_on_desk: int = 0
     safe_open: bool = False
     safe_center: Point | None = None
     person_at_safe: bool = False
@@ -90,11 +95,14 @@ def build_timeline(frame_ts: list[float], observations: list[Observation], track
     by_ts: dict[float, list[Observation]] = {}
     for o in observations:
         by_ts.setdefault(o.ts, []).append(o)
-    states = [_state_at(ts, by_ts.get(ts, []), tracks, zones) for ts in frame_ts]
+    states = []
+    for i, ts in enumerate(frame_ts):
+        neighbours = [o for j in (i - 1, i + 1) if 0 <= j < len(frame_ts) for o in by_ts.get(frame_ts[j], [])]
+        states.append(_state_at(ts, by_ts.get(ts, []), neighbours, tracks, zones))
     return Timeline(states=states, tracks=[t for t in tracks if t.counted()], zones=zones)
 
 
-def _state_at(ts: float, obs: list[Observation], tracks: list[Track], zones: Zones) -> SecondState:
+def _state_at(ts: float, obs: list[Observation], neighbours: list[Observation], tracks: list[Track], zones: Zones) -> SecondState:
     state = SecondState(t=ts)
     for track in tracks:
         box = track.box_at(ts)
@@ -117,6 +125,8 @@ def _state_at(ts: float, obs: list[Observation], tracks: list[Track], zones: Zon
         state.screen_state = max(monitors, key=lambda o: o.score).attrs.get(ATTR_SCREEN_STATE, SCREEN_UNKNOWN)
     state.cash_on_desk = sum(1 for o in obs if o.kind == KIND_CASH and zones.on_desk(center(o.box)))
     state.bags_on_desk = sum(1 for o in obs if o.kind == KIND_BAG and zones.on_desk(center(o.box)))
+    state.personal_items_on_desk = sum(1 for o in _resting_personal_items(obs, neighbours) if _near_cashier(center(o.box), state, zones))
+    state.drinks_on_desk = sum(1 for o in obs if o.kind == KIND_DRINK and _near_cashier(center(o.box), state, zones))
     safes = [o for o in obs if o.kind == KIND_SAFE_OPEN]
     if safes:
         state.safe_open = True
@@ -124,3 +134,23 @@ def _state_at(ts: float, obs: list[Observation], tracks: list[Track], zones: Zon
         state.person_at_safe = any(zones.near(p.center, state.safe_center) for p in state.persons)
     state.door_open = any(o.kind == KIND_DOOR_OPEN and zones.in_door(center(o.box)) for o in obs)
     return state
+
+
+def _resting_personal_items(obs: list[Observation], neighbours: list[Observation]) -> list[Observation]:
+    """A bag carried past the desk moves between frames; a cash bag is valuables, not a personal item."""
+    valuables = [o.box for o in obs if o.kind == KIND_BAG]
+    nearby = [o.box for o in neighbours if o.kind == KIND_PERSONAL_ITEM]
+    return [
+        o for o in obs if o.kind == KIND_PERSONAL_ITEM and not _same_object(o.box, valuables) and _same_object(o.box, nearby)
+    ]
+
+
+def _same_object(box: Box, others: list[Box]) -> bool:
+    return any(iou(box, other) >= SAME_OBJECT_IOU for other in others)
+
+
+def _near_cashier(p: Point, state: SecondState, zones: Zones) -> bool:
+    """On the desk and within the seat radius of the person sitting at the cashier's seat."""
+    if not zones.on_desk(p):
+        return False
+    return any(person.at_seat and distance(p, person.center, zones.aspect) <= zones.cashier_radius for person in state.persons)

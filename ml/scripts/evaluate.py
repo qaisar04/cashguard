@@ -26,6 +26,8 @@ IMPLEMENTED_TYPES = {
     "cash_room_door_open",
     "unauthorized_entry",
     "cash_exposed_to_visitor",
+    "personal_items_at_workplace",
+    "food_drink_at_workplace",
 }
 COLUMNS = {"video": "video_id", "violation": "violation", "timecode": "timecode_sec", "type": "type_id", "certainty": "certainty"}
 TOLERANCES_SEC = (2.0, 5.0)

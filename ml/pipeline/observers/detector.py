@@ -33,7 +33,7 @@ class DetectorObserver:
         per_frame: list[list] = [[] for _ in frames]
         for detector, cfg in self.detectors:
             for i, detections in enumerate(detector.detect(images, cfg.queries)):
-                per_frame[i].extend(detections)
+                per_frame[i].extend(d for d in detections if cfg.passes(d.group, d.score))
         observations: list[Observation] = []
         for frame, detections in zip(frames, per_frame):
             for det in detections:

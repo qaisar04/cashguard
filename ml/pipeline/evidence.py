@@ -6,7 +6,17 @@ import cv2
 import numpy as np
 
 from app.settings import EvidenceConfig
-from pipeline.observers.base import KIND_BAG, KIND_CASH, KIND_DOOR_OPEN, KIND_MONITOR, KIND_PERSON, KIND_SAFE_OPEN, Observation
+from pipeline.observers.base import (
+    KIND_BAG,
+    KIND_CASH,
+    KIND_DOOR_OPEN,
+    KIND_DRINK,
+    KIND_MONITOR,
+    KIND_PERSON,
+    KIND_PERSONAL_ITEM,
+    KIND_SAFE_OPEN,
+    Observation,
+)
 from pipeline.video import Frame
 
 # OpenCV's Hershey fonts have no Cyrillic glyphs, so on-frame labels are English.
@@ -17,6 +27,8 @@ LABELS = {
     KIND_BAG: "bag/folder",
     KIND_SAFE_OPEN: "open safe",
     KIND_DOOR_OPEN: "open door",
+    KIND_PERSONAL_ITEM: "personal item",
+    KIND_DRINK: "drink",
 }
 COLORS_BGR = {
     KIND_PERSON: (255, 160, 0),
@@ -25,6 +37,8 @@ COLORS_BGR = {
     KIND_BAG: (200, 0, 200),
     KIND_SAFE_OPEN: (0, 0, 255),
     KIND_DOOR_OPEN: (0, 120, 255),
+    KIND_PERSONAL_ITEM: (255, 0, 120),
+    KIND_DRINK: (120, 200, 60),
 }
 BOX_THICKNESS = 2
 FONT = cv2.FONT_HERSHEY_SIMPLEX

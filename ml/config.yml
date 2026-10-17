@@ -10,19 +10,31 @@ detectors:
     device: auto            # auto | cpu | mps | cuda
     batch_size: 4
     score_threshold: 0.7
+    # Personal items / drinks score lower than people (handbag 0.44-0.66, cup 0.3-0.5 on the dataset;
+    # the desk phone reaches 0.30 as "handbag"): per-group thresholds.
+    group_thresholds:
+      personal_item: 0.4
+      drink: 0.35
     queries:
       person: ["person"]
       monitor: ["laptop", "tv"]
-      bag: ["handbag", "backpack", "suitcase"]
+      bag: ["suitcase"]   # handbag / backpack are the cashier's personal items, not a cash bag
+      personal_item: ["handbag", "backpack"]
+      drink: ["cup", "bottle", "wine glass"]
   # Open-vocabulary detector for things COCO has no class for.
   - backend: owlv2
     model: google/owlv2-base-patch16-ensemble
     device: auto
     batch_size: 4
     score_threshold: 0.27
+    group_thresholds:
+      personal_item: 0.33   # a worn jacket scores up to 0.28, a handbag on the desk 0.35-0.46
+      drink: 0.3
     queries:
       cash: ["a bundle of banknotes", "a stack of paper money", "cash"]
       bag: ["a green bag", "a money bag", "a cash bag", "a pouch", "a document folder", "a paper folder"]
+      personal_item: ["a handbag", "a purse", "a coat", "a jacket"]
+      drink: ["a coffee cup", "a paper cup", "a mug"]
       safe_open: ["an open safe", "an open safe door"]
       door_open: ["an open door", "an open doorway"]
 
@@ -69,11 +81,13 @@ tracking:
 rules:
   # safe_left_open / cash_room_door_open need a state classifier for the safe/door crop: zero-shot
   # detection cannot tell open from closed on this footage, so they are off until a few-shot probe is trained.
-  enabled: [workstation_unlocked, valuables_left_unattended, unauthorized_entry, cash_exposed_to_visitor]
+  enabled: [workstation_unlocked, valuables_left_unattended, unauthorized_entry, cash_exposed_to_visitor, personal_items_at_workplace, food_drink_at_workplace]
   door_state_trusted: false   # the zero-shot door_open detection fires on a closed door; keep the "door was open" branch off
   unattended_sec: 3
   safe_open_sec: 4
   door_open_sec: 4
+  personal_items_sec: 4
+  food_drink_sec: 4
   min_presence_sec: 3
   merge_gap_sec: 10
   max_events: 5
