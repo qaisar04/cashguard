@@ -297,6 +297,61 @@ def failure_reason(r: VideoResult, catalog: Catalog) -> str | None:
     return None
 
 
+# ---------------------------------------------------------------- official labels (organiser file: verdict + timecode only)
+
+OFFICIAL_VIOLATION_WORD = "нарушение"
+OFFICIAL_CLEAN_PREFIX = "без"
+OFFICIAL_TIMECODE_RE = re.compile(r"(\d+(?:[.,]\d+)?)")
+
+
+def read_official_labels(path: Path) -> dict[str, tuple[bool, float | None]]:
+    """open_labels.xlsx: `наименование файла | таймстемп ('22 секунда') | нарушение / без нарушения`."""
+    from openpyxl import load_workbook
+
+    ws = load_workbook(path, read_only=True, data_only=True).worksheets[0]
+    labels: dict[str, tuple[bool, float | None]] = {}
+    for row in list(ws.iter_rows(values_only=True))[1:]:
+        if not row or row[0] is None:
+            continue
+        video_id = str(row[0]).strip().upper().replace("Х", "X")
+        verdict_text = str(row[2] or "").strip().lower()
+        violation = OFFICIAL_VIOLATION_WORD in verdict_text and not verdict_text.startswith(OFFICIAL_CLEAN_PREFIX)
+        match = OFFICIAL_TIMECODE_RE.search(str(row[1] or ""))
+        timecode = float(match.group(1).replace(",", ".")) if match and violation else None
+        labels[video_id] = (violation, timecode)
+    return labels
+
+
+def official_block(results: list[VideoResult], official: dict[str, tuple[bool, float | None]]) -> str:
+    rows = []
+    tp = fp = fn = tn = 0
+    errors: list[float] = []
+    for r in results:
+        key = r.label.video_id.upper()
+        if key not in official:
+            continue
+        violation, timecode = official[key]
+        predicted = r.predicted
+        tp += violation and predicted
+        fp += (not violation) and predicted
+        fn += violation and not predicted
+        tn += (not violation) and not predicted
+        err = None
+        if violation and predicted and timecode is not None and r.violations:
+            err = min((v["timecode_sec"] - timecode for v in r.violations), key=abs)
+            errors.append(abs(err))
+        rows.append(f"| {r.label.video_id} | {'нарушение' if violation else '—'}{f' @{timecode:g}' if timecode is not None else ''} | "
+                    f"{r.body.get('verdict') or r.status} | {'' if err is None else f'{err:+.1f}s'} |")
+    n = tp + fp + fn + tn
+    lines = ["## Official labels (organiser file: verdict + timecode only)", "",
+             f"- videos matched: {n}; verdict accuracy {(tp + tn) / n:.0%}" if n else "- no videos matched",
+             f"- violations: {tp + fn}, detected {tp} (recall {tp / (tp + fn):.0%}); clean: {fp + tn}, false positives {fp}" if n else "",
+             (f"- timecode on detected violations: within ±2s {sum(e <= 2 for e in errors) / len(errors):.0%}, "
+              f"within ±5s {sum(e <= 5 for e in errors) / len(errors):.0%}, MAE {sum(errors) / len(errors):.1f}s") if errors else "- timecode: n/a",
+             "", "| video | official label | verdict | signed timecode error |", "|---|---|---|---|", *rows]
+    return "\n".join(lines)
+
+
 # ---------------------------------------------------------------- report
 
 def pass_fail_table(rows: list[tuple[str, str, bool | None, str]]) -> str:
@@ -357,6 +412,7 @@ def main() -> None:
     parser.add_argument("--tuned-half", choices=["odd", "even", "none"], default="none",
                         help="which half thresholds were tuned on; criteria are judged on the other half as well")
     parser.add_argument("--config-log", type=Path, default=None, help="markdown log of config changes to embed")
+    parser.add_argument("--official-labels", type=Path, default=None, help="organiser's open_labels.xlsx (verdict + timecode only)")
     args = parser.parse_args()
 
     catalog = Catalog()
@@ -465,6 +521,8 @@ def main() -> None:
                    f"- originals: recall {len(m.detected)}/{len(m.implemented)}, clean FP {len(m.clean_fp)}/{len(m.clean)}",
                    f"- warped: recall {len(wm.detected)}/{len(wm.implemented)}, clean FP {len(wm.clean_fp)}/{len(wm.clean)} "
                    f"({', '.join(r.label.video_id for r in wm.clean_fp) or '-'}); done {sum(1 for r in warped_results if r.status == STATUS_DONE)}/{len(warped_results)}"]
+    if args.official_labels and args.official_labels.is_file():
+        report += ["", official_block(results, read_official_labels(args.official_labels))]
     if args.config_log and args.config_log.is_file():
         report += ["", "## Config change log", "", args.config_log.read_text(encoding="utf-8")]
     report += ["", "## Failures (frames in failures/<video>/)", ""] + (failures or ["none"])
