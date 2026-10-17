@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CashGuard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">CashGuard</div>
+    <div class="sub">Проверка кассовой дисциплины по видеозаписи</div>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <h2>1. Доступ</h2>
+      <label class="field">
+        <span>API-ключ (заголовок X-API-Key)</span>
+        <input id="apiKey" type="password" autocomplete="off" placeholder="введите ключ">
+      </label>
+    </section>
+
+    <section class="card">
+      <h2>2. Видео</h2>
+      <div id="drop" class="drop">
+        <input id="file" type="file" accept=".mov,.mp4,video/quicktime,video/mp4">
+        <p>Перетащите файл <b>.mov</b> сюда или выберите вручную</p>
+        <p id="fileName" class="muted"></p>
+      </div>
+      <button id="send" class="btn" disabled>Запустить анализ</button>
+    </section>
+
+    <section id="statusCard" class="card hidden">
+      <h2>3. Обработка</h2>
+      <div class="status">
+        <span id="spinner" class="spinner"></span>
+        <span id="statusText"></span>
+      </div>
+      <div class="muted">job_id: <code id="jobId"></code></div>
+    </section>
+
+    <section id="resultCard" class="card hidden">
+      <h2>4. Результат</h2>
+      <div id="verdict" class="verdict"></div>
+      <div id="violations"></div>
+    </section>
+
+    <section id="errorCard" class="card error hidden">
+      <h2>Ошибка</h2>
+      <pre id="errorText"></pre>
+    </section>
+  </main>
+
+  <footer class="foot">
+    Результат является подсказкой для проверки человеком, а не юридическим или дисциплинарным заключением.
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

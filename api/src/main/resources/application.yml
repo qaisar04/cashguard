@@ -1,0 +1,38 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: ${CASHGUARD_MAX_UPLOAD:300MB}
+      max-request-size: ${CASHGUARD_MAX_UPLOAD:300MB}
+  mvc:
+    async:
+      request-timeout: 30s
+
+cashguard:
+  api-key: ${CASHGUARD_API_KEY:change-me}
+  ml:
+    base-url: ${ML_BASE_URL:http://localhost:8000}
+    api-key: ${ML_API_KEY:change-me-ml}
+    timeout: ${ML_TIMEOUT:270s}
+  storage:
+    dir: ${CASHGUARD_STORAGE_DIR:./data/videos}
+    max-upload: ${CASHGUARD_MAX_UPLOAD:300MB}
+  job:
+    workers: ${CASHGUARD_JOB_WORKERS:1}
+    queue-capacity: ${CASHGUARD_JOB_QUEUE:20}
+    ttl: ${CASHGUARD_JOB_TTL:2h}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    kz.cashguard: INFO

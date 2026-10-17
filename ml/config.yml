@@ -1,0 +1,85 @@
+video:
+  fps: 1.0
+  max_side: 960
+  max_frames: 150         # a 145 s clip stays at ~1 fps; longer clips are sampled sparser
+
+detectors:
+  # Closed-set COCO detector: reliable people / laptops / bags (hallway reflections score < 0.6).
+  - backend: rtdetr
+    model: PekingU/rtdetr_r50vd_coco_o365
+    device: auto            # auto | cpu | mps | cuda
+    batch_size: 4
+    score_threshold: 0.7
+    queries:
+      person: ["person"]
+      monitor: ["laptop", "tv"]
+      bag: ["handbag", "backpack", "suitcase"]
+  # Open-vocabulary detector for things COCO has no class for.
+  - backend: owlv2
+    model: google/owlv2-base-patch16-ensemble
+    device: auto
+    batch_size: 4
+    score_threshold: 0.27
+    queries:
+      cash: ["a bundle of banknotes", "a stack of paper money", "cash"]
+      bag: ["a green bag", "a money bag", "a cash bag", "a pouch", "a document folder", "a paper folder"]
+      safe_open: ["an open safe", "an open safe door"]
+      door_open: ["an open door", "an open doorway"]
+
+screen:
+  enabled: true
+  clip_model: openai/clip-vit-base-patch32
+  # Few-shot mode: CLIP embeddings of labelled laptop crops (prototypes/screen_spans.yml -> scripts/build_prototypes.py).
+  # Remove `prototypes` to fall back to the zero-shot text prompts below.
+  prototypes: prototypes/screen.npz
+  knn_k: 5
+  min_similarity: 0.7
+  panel_fraction: 1.0
+  min_luminance: 55
+  prompts:
+    lock_screen: ["a computer lock screen", "a login screen with a password field", "a screensaver"]
+    application: ["a desktop application window with tables and text", "banking software on a computer screen", "a spreadsheet on a screen"]
+
+# Distances are in units of frame height (x is scaled by width/height), so they survive
+# different camera positions; the cashier/desk/safe zones are derived from detections.
+zones:
+  cashier_radius: 0.16      # around the monitor: the cashier's seat
+  desk_radius: 0.30         # around the monitor: desk surface where cash/bags lie
+  safe_radius: 0.18         # around an open safe: person "at the safe"
+  door: [[0.0, 0.0], [0.50, 0.0], [0.50, 0.45], [0.0, 0.55]]   # normalized polygon: entrance area (door opening + glass wall)
+  glass: [[0.0, 0.0], [0.15, 0.0], [0.15, 0.60], [0.0, 0.60]]  # glass-wall strip left of the door: reflections / corridor
+
+person_verifier:
+  # CLIP vote on each person crop; a majority "reflection"/"outside" vote vetoes a mid-video track (never promotes).
+  enabled: true
+  prompts:
+    inside: ["a person standing inside an office room", "a person walking into the room", "a person at a desk in an office"]
+    reflection: ["a reflection of a person in a glass wall", "a faint mirrored silhouette on glass"]
+    outside: ["a person behind a glass wall", "a person seen through a glass partition in a corridor"]
+
+tracking:
+  iou_threshold: 0.2
+  max_missing_sec: 2.0
+  reflection_corr: 0.8        # |velocity correlation| per axis (mirrored sign allowed) to call a track a reflection
+  reflection_min_steps: 3     # common moving steps required (3 s at 1 fps)
+  reflection_min_motion: 0.05 # total displacement in normalized units; static pairs are never compared
+  edge_margin: 0.06           # tracks confined to the glass strip / this edge band are reflections or people outside
+  inside_vote_ratio: 0.5
+
+rules:
+  # safe_left_open / cash_room_door_open need a state classifier for the safe/door crop: zero-shot
+  # detection cannot tell open from closed on this footage, so they are off until a few-shot probe is trained.
+  enabled: [workstation_unlocked, valuables_left_unattended, unauthorized_entry, cash_exposed_to_visitor]
+  door_state_trusted: false   # the zero-shot door_open detection fires on a closed door; keep the "door was open" branch off
+  unattended_sec: 3
+  safe_open_sec: 4
+  door_open_sec: 4
+  min_presence_sec: 3
+  merge_gap_sec: 10
+  max_events: 5
+
+evidence:
+  frames: 3
+  max_side: 640
+  jpeg_quality: 80
+  draw_boxes: true

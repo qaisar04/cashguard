@@ -1,0 +1,16 @@
+# Labelled time spans used to build CLIP prototypes for the screen-state classifier.
+# States: application (working window), desktop (unlocked, wallpaper only), lock_screen (wallpaper + clock), off.
+# Spans were chosen by looking at the laptop crops (scripts/build_prototypes.py --sheet prints them).
+videos_dir: ~/Downloads/open/videos
+spans:
+  - {video: X-22, start: 0,  end: 4,   label: application}
+  - {video: X-23, start: 0,  end: 4,   label: application}
+  - {video: X-29, start: 0,  end: 4,   label: application}
+  - {video: X-28, start: 0,  end: 999, label: application}
+  - {video: X-11, start: 0,  end: 999, label: application}
+  - {video: X-22, start: 8,  end: 999, label: desktop}
+  - {video: X-23, start: 7,  end: 999, label: lock_screen}
+  - {video: X-29, start: 8,  end: 999, label: lock_screen}
+  - {video: X-25, start: 0,  end: 999, label: "off"}
+  - {video: X-27, start: 0,  end: 999, label: "off"}
+  - {video: X-43, start: 0,  end: 999, label: "off"}

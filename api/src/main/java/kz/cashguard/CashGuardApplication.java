@@ -1,0 +1,17 @@
+package kz.cashguard;
+
+import kz.cashguard.config.AppProperties;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.scheduling.annotation.EnableScheduling;
+
+@SpringBootApplication
+@EnableScheduling
+@EnableConfigurationProperties(AppProperties.class)
+public class CashGuardApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(CashGuardApplication.class, args);
+    }
+}

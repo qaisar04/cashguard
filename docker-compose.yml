@@ -1,0 +1,26 @@
+services:
+  api:
+    build: ./api
+    ports:
+      - "8080:8080"
+    environment:
+      CASHGUARD_API_KEY: ${CASHGUARD_API_KEY:-change-me}
+      ML_BASE_URL: http://ml:8000
+      ML_API_KEY: ${ML_API_KEY:-change-me-ml}
+      ML_TIMEOUT: 270s
+      CASHGUARD_STORAGE_DIR: /data/videos
+    volumes:
+      - ./data:/data
+    depends_on:
+      - ml
+
+  ml:
+    build: ./ml
+    environment:
+      ML_API_KEY: ${ML_API_KEY:-change-me-ml}
+      ML_OBSERVER: ${ML_OBSERVER:-detector}
+      ML_DATA_DIR: /data/ml
+    volumes:
+      - ./data:/data
+    expose:
+      - "8000"
