@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from app.settings import RulesConfig
 from pipeline.rules.base import Candidate, evidence_points, fmt
-from pipeline.rules.cash_room_door_open import TYPE_ID as DOOR_OPEN_TYPE
 from pipeline.timeline import Timeline
 
 TYPE_ID = "unauthorized_entry"
@@ -48,7 +47,6 @@ class UnauthorizedEntryRule:
                     end=end,
                     description=f"На {fmt(onset)} в помещение кассы входит ещё один человек; {reason}.",
                     evidence_ts=evidence_points(onset, end),
-                    suppresses={DOOR_OPEN_TYPE},
                 )
             )
         return out
