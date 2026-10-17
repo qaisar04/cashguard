@@ -28,7 +28,10 @@ class UnauthorizedEntryRule:
                 p for p in state.visitors
                 if p.track_id != track.id and state.t - p.first_seen >= cfg.min_presence_sec and timeline.zones.on_desk(p.center)
             ]
-            door_was_open = cfg.door_state_trusted and _door_open_before(timeline, idx, cfg.door_open_sec)
+            # the door branch has no second visitor to corroborate it: a track that vanishes within min_presence_sec
+            # (a reflection in the glass while the door swings shut) is not someone who came in
+            stays = track.last_ts - track.first_ts >= cfg.min_presence_sec
+            door_was_open = cfg.door_state_trusted and stays and _door_open_before(timeline, idx, cfg.door_open_sec)
             if not others and not door_was_open:
                 continue
             onset = state.t

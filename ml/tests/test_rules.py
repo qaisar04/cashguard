@@ -106,6 +106,14 @@ def test_unauthorized_entry_after_door_left_open_suppresses_door_event():
     assert [e.type_id for e in events] == ["unauthorized_entry"]
 
 
+def test_unauthorized_entry_door_branch_ignores_a_track_that_vanishes_at_once():
+    flicker = person(2, AWAY, first_seen=6.0)
+    states = [state(t, [CASHIER], door_open=True) for t in range(0, 6)] + [state(t, [CASHIER, flicker], door_open=True) for t in range(6, 8)]
+    states += [state(t, [CASHIER]) for t in range(8, 12)]
+    tracks = [Track(1, [(float(t), box_at(SEAT)) for t in range(12)]), Track(2, [(float(t), box_at(AWAY)) for t in range(6, 8)], entered=True)]
+    assert UnauthorizedEntryRule().evaluate(timeline(states, tracks), rules_cfg()) == []
+
+
 def test_unauthorized_entry_ignores_door_state_when_not_trusted():
     visitor = person(2, AWAY, first_seen=6.0)
     states = [state(t, [CASHIER], door_open=True) for t in range(0, 6)] + [state(t, [CASHIER, visitor], door_open=True) for t in range(6, 12)]
