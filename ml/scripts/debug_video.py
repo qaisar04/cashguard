@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 
 from app.settings import load_pipeline_config
-from app.state import _build_observer
+from app.state import _build_observers
 from app.settings import Settings
 from pipeline.analyzer import Analyzer
 from pipeline.evidence import EvidenceBuilder
@@ -28,11 +28,13 @@ def main() -> None:
 
     settings = Settings(**({"observer": args.observer} if args.observer else {}))
     cfg = load_pipeline_config(settings.config_path)
-    observer = _build_observer(settings, cfg)
+    observers = _build_observers(settings, cfg)
     info, frames = sample_frames(args.video, cfg.video.fps, cfg.video.max_side)
     if args.max_frames:
         frames = frames[: args.max_frames]
-    observations = observer.observe(frames)
+    observations = []
+    for observer in observers:
+        observations.extend(observer.observe(frames, prior=tuple(observations)))
 
     args.out.mkdir(parents=True, exist_ok=True)
     builder = EvidenceBuilder(cfg.evidence.model_copy(update={"frames": 1, "max_side": 960, "draw_boxes": True}))
@@ -42,7 +44,7 @@ def main() -> None:
     dump = [{"ts": o.ts, "kind": o.kind, "box": [round(v, 4) for v in o.box], "score": round(o.score, 3), "attrs": o.attrs} for o in observations]
     (args.out / "observations.json").write_text(json.dumps(dump, ensure_ascii=False, indent=1), encoding="utf-8")
 
-    analyzer = Analyzer(cfg, [observer], RuleCatalog.load())
+    analyzer = Analyzer(cfg, observers, RuleCatalog.load())
     events, meta = analyzer.analyze(args.video)
     (args.out / "events.json").write_text(
         json.dumps([{"type_id": e.type_id, "timecode_sec": e.timecode_sec, "description": e.description} for e in events], ensure_ascii=False, indent=1),

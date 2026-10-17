@@ -66,10 +66,29 @@ tracking:
   edge_margin: 0.06           # tracks confined to the glass strip / this edge band are reflections or people outside
   inside_vote_ratio: 0.5
 
+# Action understanding for the "Деньги без проверки" family: a small VLM answers yes/no questions about
+# 3-frame windows cropped to the desk; rules combine its answers with the person timeline.
+vlm:
+  enabled: false            # TODO(vlm): set after the s/window measurement meets the time budget (see report)
+  model: Qwen/Qwen3-VL-2B-Instruct   # Apache-2.0; HuggingFaceTB/SmolVLM2-500M-Video-Instruct (Apache-2.0) is the light fallback
+  device: auto
+  mode: list                # list: one short answer naming the true keys (~1 s decode); json: full JSON (~70 tokens); yes_no: 7 forward passes per window
+  stride_sec: 5
+  window_sec: 6
+  frames_per_window: 3
+  max_side: 448
+  crop_margin: 0.08
+  min_crop_height: 0.5
+  max_new_tokens: 40
+  min_confidence: 0.5
+  require_person_near_desk: true
+
 rules:
   # safe_left_open / cash_room_door_open need a state classifier for the safe/door crop: zero-shot
   # detection cannot tell open from closed on this footage, so they are off until a few-shot probe is trained.
-  enabled: [workstation_unlocked, valuables_left_unattended, unauthorized_entry, cash_exposed_to_visitor]
+  enabled: [workstation_unlocked, valuables_left_unattended, unauthorized_entry, cash_exposed_to_visitor,
+            cash_not_machine_verified, no_client_identification, unrecounted_cash_to_safe,
+            collector_handover_unverified, counting_not_in_client_presence]
   door_state_trusted: false   # the zero-shot door_open detection fires on a closed door; keep the "door was open" branch off
   unattended_sec: 3
   safe_open_sec: 4
@@ -77,6 +96,11 @@ rules:
   min_presence_sec: 3
   merge_gap_sec: 10
   max_events: 5
+  # VLM-action rules (no-ops while vlm.enabled is false)
+  machine_lookaround_sec: 15
+  recount_lookback_sec: 60
+  collector_leave_sec: 12
+  client_gone_sec: 3
 
 evidence:
   frames: 3

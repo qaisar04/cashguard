@@ -16,8 +16,10 @@ def main() -> None:
     args = parser.parse_args()
     cfg = load_pipeline_config(args.config)
     models = [d.model for d in cfg.detectors] + ([cfg.screen.clip_model] if cfg.screen.enabled else [])
+    if cfg.vlm.enabled:
+        models.append(cfg.vlm.model)
     for model in models:
-        path = snapshot_download(model, cache_dir=args.cache_dir, allow_patterns=["*.json", "*.txt", "*.safetensors"])
+        path = snapshot_download(model, cache_dir=args.cache_dir, allow_patterns=["*.json", "*.txt", "*.safetensors", "*.jinja"])
         print(f"{model} -> {path}")
 
 

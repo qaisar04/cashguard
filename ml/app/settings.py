@@ -61,6 +61,24 @@ class PersonVerifierConfig(BaseModel):
     prompts: dict[str, list[str]]
 
 
+class VlmConfig(BaseModel):
+    """Action understanding over short frame windows with a small vision-language model (pipeline/observers/vlm.py)."""
+
+    enabled: bool = False
+    model: str = "Qwen/Qwen3-VL-2B-Instruct"
+    device: str = "auto"
+    mode: str = Field(default="list", pattern="^(list|json|yes_no)$", description="list: one short answer naming the true keys; json: one JSON answer per window; yes_no: P(yes) per question (7 forward passes)")
+    stride_sec: float = Field(gt=0, default=5.0)
+    window_sec: float = Field(gt=0, default=6.0)
+    frames_per_window: int = Field(ge=1, le=4, default=3)
+    max_side: int = Field(gt=0, default=448, description="each window frame is cropped to the desk area and resized to this")
+    crop_margin: float = Field(ge=0, le=0.5, default=0.08)
+    min_crop_height: float = Field(gt=0, le=1, default=0.5)
+    max_new_tokens: int = Field(gt=0, default=40)
+    min_confidence: float = Field(ge=0, le=1, default=0.5)
+    require_person_near_desk: bool = True
+
+
 class RulesConfig(BaseModel):
     enabled: list[str] = Field(min_length=1)
     door_state_trusted: bool = False
@@ -70,6 +88,10 @@ class RulesConfig(BaseModel):
     min_presence_sec: float = Field(ge=0)
     merge_gap_sec: float = Field(ge=0)
     max_events: int = Field(gt=0)
+    machine_lookaround_sec: float = Field(ge=0, default=15.0, description="hand counting this close to machine counting is a pre-count, not a violation")
+    recount_lookback_sec: float = Field(ge=0, default=60.0, description="counting this long before cash goes into the safe counts as a recount")
+    collector_leave_sec: float = Field(ge=0, default=12.0, description="a collector gone this soon after dropping the bag left without a check")
+    client_gone_sec: float = Field(ge=0, default=3.0, description="counting must continue this long after the client left")
 
 
 class EvidenceConfig(BaseModel):
@@ -88,6 +110,7 @@ class PipelineConfig(BaseModel):
     tracking: TrackingConfig
     rules: RulesConfig
     evidence: EvidenceConfig
+    vlm: VlmConfig = VlmConfig()
 
 
 def load_pipeline_config(path: Path = DEFAULT_CONFIG) -> PipelineConfig:

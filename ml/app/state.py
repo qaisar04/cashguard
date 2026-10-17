@@ -6,7 +6,7 @@ from pathlib import Path
 
 from app.jobs import JobStore
 from app.schemas import Event, EvidenceFrame, RuleReference
-from app.settings import OBSERVER_DETECTOR, OBSERVER_STUB, Settings, load_pipeline_config
+from app.settings import OBSERVER_DETECTOR, OBSERVER_STUB, PipelineConfig, Settings, load_pipeline_config
 from pipeline.analyzer import AnalysisEvent, Analyzer
 from pipeline.observers.base import Observer
 from rules.catalog import RuleCatalog
@@ -35,7 +35,7 @@ class _Holder:
         self.initialized = True
         cfg = load_pipeline_config(settings.config_path)
         self.settings = settings
-        self.analyzer = Analyzer(cfg, [_build_observer(settings, cfg)], RuleCatalog.load())
+        self.analyzer = Analyzer(cfg, _build_observers(settings, cfg), RuleCatalog.load())
         self.jobs = JobStore(self.run_events, settings.workers, settings.job_ttl_sec)
         settings.data_dir.mkdir(parents=True, exist_ok=True)
         log.info("ML service ready: observer=%s, data_dir=%s", settings.observer, settings.data_dir)
@@ -45,7 +45,27 @@ class _Holder:
         return [to_schema(e) for e in events]
 
 
-def _build_observer(settings: Settings, cfg) -> Observer:
+def _build_observers(settings: Settings, cfg: PipelineConfig) -> list[Observer]:
+    observers = [_build_observer(settings, cfg)]
+    if cfg.vlm.enabled and settings.observer == OBSERVER_DETECTOR:
+        vlm = _build_vlm_observer(cfg)
+        if vlm is not None:
+            observers.append(vlm)
+    return observers
+
+
+def _build_vlm_observer(cfg: PipelineConfig) -> Observer | None:
+    from pipeline.observers.vlm import HfVlmBackend, VlmObserver
+
+    try:
+        backend = HfVlmBackend(cfg.vlm.model, cfg.vlm.device, cfg.vlm.max_new_tokens)
+    except OSError as e:
+        log.warning("vlm disabled: weights for %s are not available (%s)", cfg.vlm.model, e)
+        return None
+    return VlmObserver(cfg.vlm, cfg.zones, backend)
+
+
+def _build_observer(settings: Settings, cfg: PipelineConfig) -> Observer:
     if settings.observer == OBSERVER_STUB:
         from pipeline.observers.stub import StubObserver
 

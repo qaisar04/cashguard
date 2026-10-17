@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import Protocol, Sequence
 
 from pipeline.geometry import Box
 from pipeline.video import Frame
@@ -12,6 +12,7 @@ KIND_CASH = "cash"
 KIND_BAG = "bag"
 KIND_SAFE_OPEN = "safe_open"
 KIND_DOOR_OPEN = "door_open"
+KIND_ACTION = "action"
 
 ATTR_SCREEN_STATE = "screen_state"
 SCREEN_OFF = "off"
@@ -20,6 +21,10 @@ SCREEN_APPLICATION = "application"
 SCREEN_DESKTOP = "desktop"
 SCREEN_UNLOCKED_STATES = (SCREEN_APPLICATION, SCREEN_DESKTOP)
 SCREEN_UNKNOWN = "unknown"
+
+ATTR_ACTION = "action"
+ATTR_WINDOW = "window"
+FULL_FRAME_BOX = (0.0, 0.0, 1.0, 1.0)
 
 
 @dataclass(frozen=True)
@@ -34,4 +39,6 @@ class Observation:
 class Observer(Protocol):
     name: str
 
-    def observe(self, frames: list[Frame]) -> list[Observation]: ...
+    def observe(self, frames: list[Frame], prior: Sequence[Observation] = ()) -> list[Observation]:
+        """`prior` holds the observations emitted by the observers that ran before this one."""
+        ...

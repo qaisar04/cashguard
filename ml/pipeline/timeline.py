@@ -5,7 +5,10 @@ from typing import Callable
 
 from pipeline.geometry import Point, center
 from pipeline.observers.base import (
+    ATTR_ACTION,
     ATTR_SCREEN_STATE,
+    ATTR_WINDOW,
+    KIND_ACTION,
     KIND_BAG,
     KIND_CASH,
     KIND_DOOR_OPEN,
@@ -45,6 +48,10 @@ class SecondState:
     safe_center: Point | None = None
     person_at_safe: bool = False
     door_open: bool = False
+    actions: list[str] = field(default_factory=list)
+
+    def has_action(self, *actions: str) -> bool:
+        return any(a in self.actions for a in actions)
 
     @property
     def cashier_present(self) -> bool:
@@ -86,12 +93,37 @@ class Timeline:
         return self.states[end - 1].t - self.states[start].t
 
 
+def visitor_left_at(states: list[SecondState]) -> float | None:
+    """First second with no visitor after at least one visitor was seen in `states`."""
+    seen = False
+    for s in states:
+        if s.visitors:
+            seen = True
+        elif seen:
+            return s.t
+    return None
+
+
 def build_timeline(frame_ts: list[float], observations: list[Observation], tracks: list[Track], zones: Zones) -> Timeline:
     by_ts: dict[float, list[Observation]] = {}
+    actions = [o for o in observations if o.kind == KIND_ACTION]
     for o in observations:
-        by_ts.setdefault(o.ts, []).append(o)
+        if o.kind != KIND_ACTION:
+            by_ts.setdefault(o.ts, []).append(o)
     states = [_state_at(ts, by_ts.get(ts, []), tracks, zones) for ts in frame_ts]
+    for state in states:
+        state.actions = _actions_at(state.t, actions)
     return Timeline(states=states, tracks=[t for t in tracks if t.counted()], zones=zones)
+
+
+def _actions_at(ts: float, actions: list[Observation]) -> list[str]:
+    """An action observation covers every second of its window [start, end]."""
+    active: set[str] = set()
+    for o in actions:
+        start, end = o.attrs.get(ATTR_WINDOW, [o.ts, o.ts])
+        if start <= ts <= end:
+            active.add(o.attrs[ATTR_ACTION])
+    return sorted(active)
 
 
 def _state_at(ts: float, obs: list[Observation], tracks: list[Track], zones: Zones) -> SecondState:
