@@ -17,10 +17,10 @@ class CountingNotInClientPresenceRule:
         out: list[Candidate] = []
         for run in timeline.runs(lambda s: s.has_action(ACTION_HAND_COUNTING, ACTION_MACHINE_COUNTING)):
             states = timeline.states[run[0] : run[1]]
-            left_at = visitor_left_at(states)
-            end = states[-1].t
-            if left_at is None or end - left_at < cfg.client_gone_sec:
+            left_at = visitor_left_at(states, cfg.client_gone_sec)
+            if left_at is None:
                 continue
+            end = states[-1].t
             out.append(
                 Candidate(
                     type_id=TYPE_ID,

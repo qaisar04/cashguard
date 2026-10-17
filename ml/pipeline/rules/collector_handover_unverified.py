@@ -17,7 +17,7 @@ class CollectorHandoverUnverifiedRule:
         out: list[Candidate] = []
         for run in timeline.runs(lambda s: s.has_action(ACTION_BAG_HANDOVER)):
             onset = timeline.states[run[0]].t
-            left_at = visitor_left_at(timeline.states[run[0] :])
+            left_at = visitor_left_at(timeline.states[run[0] :], cfg.client_gone_sec)
             if left_at is None or left_at - onset > cfg.collector_leave_sec:
                 continue
             if any(onset <= s.t <= left_at and s.has_action(ACTION_BAG_CHECKED) for s in timeline.states):

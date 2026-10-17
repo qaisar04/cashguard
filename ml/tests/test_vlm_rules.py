@@ -107,6 +107,17 @@ def test_client_present_until_counting_ends_is_clean():
     assert CountingNotInClientPresenceRule().evaluate(timeline(states), rules_cfg()) == []
 
 
+def test_short_track_dropout_is_not_a_leaving_client():
+    states = [state(t, [CASHIER, CLIENT], actions=[ACTION_MACHINE_COUNTING]) for t in range(8, 12)]
+    states += [state(t, [CASHIER], actions=[ACTION_MACHINE_COUNTING]) for t in range(12, 14)]
+    states += [state(t, [CASHIER, CLIENT], actions=[ACTION_MACHINE_COUNTING]) for t in range(14, 25)]
+    assert CountingNotInClientPresenceRule().evaluate(timeline(states), rules_cfg()) == []
+    states = [state(t, [CASHIER, CLIENT], actions=[ACTION_BAG_HANDOVER]) for t in range(5, 9)]
+    states += [state(t, [CASHIER]) for t in range(9, 11)]
+    states += [state(t, [CASHIER, CLIENT]) for t in range(11, 30)]
+    assert CollectorHandoverUnverifiedRule().evaluate(timeline(states), rules_cfg()) == []
+
+
 def test_counting_that_ends_right_after_client_leaves_is_clean():
     states = [state(t, [CASHIER, CLIENT], actions=[ACTION_MACHINE_COUNTING]) for t in range(8, 13)]
     states += [state(t, [CASHIER], actions=[ACTION_MACHINE_COUNTING]) for t in range(13, 15)]

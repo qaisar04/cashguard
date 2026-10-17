@@ -93,14 +93,18 @@ class Timeline:
         return self.states[end - 1].t - self.states[start].t
 
 
-def visitor_left_at(states: list[SecondState]) -> float | None:
-    """First second with no visitor after at least one visitor was seen in `states`."""
+def visitor_left_at(states: list[SecondState], gone_sec: float) -> float | None:
+    """Start of the first visitor-free stretch of at least `gone_sec` after a visitor was seen (track dropouts are shorter)."""
     seen = False
+    gone_since: float | None = None
     for s in states:
         if s.visitors:
             seen = True
+            gone_since = None
         elif seen:
-            return s.t
+            gone_since = s.t if gone_since is None else gone_since
+            if s.t - gone_since >= gone_sec:
+                return gone_since
     return None
 
 

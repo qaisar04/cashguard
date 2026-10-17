@@ -91,7 +91,7 @@ class RulesConfig(BaseModel):
     machine_lookaround_sec: float = Field(ge=0, default=15.0, description="hand counting this close to machine counting is a pre-count, not a violation")
     recount_lookback_sec: float = Field(ge=0, default=60.0, description="counting this long before cash goes into the safe counts as a recount")
     collector_leave_sec: float = Field(ge=0, default=12.0, description="a collector gone this soon after dropping the bag left without a check")
-    client_gone_sec: float = Field(ge=0, default=3.0, description="counting must continue this long after the client left")
+    client_gone_sec: float = Field(ge=0, default=3.0, description="a visitor counts as gone after this many visitor-free seconds (shorter gaps are track dropouts)")
 
 
 class EvidenceConfig(BaseModel):
