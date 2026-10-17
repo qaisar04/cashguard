@@ -7,7 +7,7 @@ import cv2
 import numpy as np
 
 from app.settings import EvidenceConfig
-from pipeline.geometry import Box, center
+from pipeline.geometry import Box
 from pipeline.observers.base import (
     KIND_BAG,
     KIND_CASH,
@@ -84,13 +84,13 @@ def person_marks(tracks: list[Track], zones: Zones) -> PersonMarks:
     for t in tracks:
         counted = t.counted()
         for ts, box in t.points:
-            label = _role(box, zones) if counted else _ignored_reason(t)
+            label = _role(t, zones) if counted else _ignored_reason(t)
             marks.setdefault(ts, []).append(PersonMark(track_id=t.id, box=box, label=label, counted=counted))
     return marks
 
 
-def _role(box: Box, zones: Zones) -> str:
-    return ROLE_CASHIER if zones.at_cashier_seat(center(box)) else ROLE_VISITOR
+def _role(t: Track, zones: Zones) -> str:
+    return ROLE_CASHIER if zones.is_cashier(t.id) else ROLE_VISITOR
 
 
 def _ignored_reason(t: Track) -> str:
