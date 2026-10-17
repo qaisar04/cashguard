@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import logging
 
 import numpy as np
@@ -23,6 +24,12 @@ class Owlv2Detector:
         self.processor = Owlv2Processor.from_pretrained(model_name)
         self.model = Owlv2ForObjectDetection.from_pretrained(model_name).to(self.device).eval()
         log.info("OWLv2 %s loaded on %s", model_name, self.device)
+
+    def with_threshold(self, score_threshold: float) -> "Owlv2Detector":
+        """Same loaded model, different score cut-off (static-object anchors score lower than cash or bags)."""
+        clone = copy.copy(self)
+        clone.threshold = score_threshold
+        return clone
 
     def detect(self, images: list[np.ndarray], queries: dict[str, list[str]]) -> list[list[Detection]]:
         prompts, groups = _flatten(queries)

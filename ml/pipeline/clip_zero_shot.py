@@ -36,13 +36,29 @@ class ClipZeroShot:
         return PromptBank(feats, owners)
 
     def embed(self, crop: np.ndarray) -> np.ndarray:
-        from PIL import Image
-
+        """Global image embedding: what the crop shows, regardless of where."""
         with self._torch.inference_mode():
-            inputs = self.processor(images=Image.fromarray(crop[:, :, ::-1]), return_tensors="pt").to(self.device)
-            feats = _embedding(self.model.get_image_features(**inputs))
+            feats = _embedding(self.model.get_image_features(pixel_values=self._pixels(crop)))
             feats = feats / feats.norm(dim=-1, keepdim=True)
         return feats[0].float().cpu().numpy()
+
+    def embed_spatial(self, crop: np.ndarray) -> np.ndarray:
+        """Grid of per-patch embeddings (unit vectors, flattened, unit norm): the dot product of two descriptors is the
+        mean patch-wise cosine similarity, so a part of the crop that changes (a swung door) is not averaged away as it
+        is in the global embedding."""
+        with self._torch.inference_mode():
+            vision = self.model.vision_model
+            hidden = vision(pixel_values=self._pixels(crop)).last_hidden_state[0, 1:, :]
+            tokens = self.model.visual_projection(vision.post_layernorm(hidden))
+            tokens = tokens / tokens.norm(dim=-1, keepdim=True)
+            flat = tokens.reshape(-1)
+            flat = flat / flat.norm()
+        return flat.float().cpu().numpy()
+
+    def _pixels(self, crop: np.ndarray):
+        from PIL import Image
+
+        return self.processor(images=Image.fromarray(crop[:, :, ::-1]), return_tensors="pt").to(self.device)["pixel_values"]
 
     def classify(self, crop: np.ndarray, bank: "PromptBank") -> str:
         feats = self._torch.from_numpy(self.embed(crop)).to(self.device)

@@ -23,8 +23,6 @@ detectors:
     queries:
       cash: ["a bundle of banknotes", "a stack of paper money", "cash"]
       bag: ["a green bag", "a money bag", "a cash bag", "a pouch", "a document folder", "a paper folder"]
-      safe_open: ["an open safe", "an open safe door"]
-      door_open: ["an open door", "an open doorway"]
 
 screen:
   enabled: true
@@ -39,6 +37,41 @@ screen:
   prompts:
     lock_screen: ["a computer lock screen", "a login screen with a password field", "a screensaver"]
     application: ["a desktop application window with tables and text", "banking software on a computer screen", "a spreadsheet on a screen"]
+
+# Open/closed state of static objects: few-shot k-NN over CLIP embeddings of labelled crops
+# (prototypes/<name>_spans.yml -> scripts/build_prototypes.py --target <name>). `embedding: spatial` compares the
+# 7x7 grid of CLIP patch embeddings instead of the global vector: a swung door is a local change that the global
+# embedding averages away. The crop is located once per video: OWLv2 median box of `anchor.queries` (padded by
+# `anchor.pad`), or `anchor.fallback_box` when there are too few hits.
+safe:
+  enabled: true
+  prototypes: prototypes/safe.npz
+  embedding: spatial
+  knn_k: 1
+  min_similarity: 0.5
+  smooth_frames: 3
+  anchor:
+    # Each prompt also fires on the white pedestals; candidates are verified against the safe prototypes (min_similarity).
+    queries: ["a gray metal cabinet", "a safe", "a small gray cabinet"]
+    score_threshold: 0.12
+    stride: 5
+    min_hits: 3
+    min_similarity: 0.5
+    pad: 0.0
+    fallback_box: [0.36, 0.25, 0.66, 0.50]
+
+door:
+  enabled: true
+  prototypes: prototypes/door.npz
+  embedding: spatial
+  knn_k: 1
+  min_similarity: 0.5
+  smooth_frames: 3
+  anchor:
+    # OWLv2 cannot localise the door panel on this footage ("a glass door" latches onto the neighbouring glass-wall
+    # section, "a door frame" scores ~0.1): the crop is the fixed top-left region that holds the door in every framing.
+    queries: []
+    fallback_box: [0.03, 0.0, 0.42, 0.50]
 
 # Distances are in units of frame height (x is scaled by width/height), so they survive
 # different camera positions; the cashier/desk/safe zones are derived from detections.
@@ -67,10 +100,9 @@ tracking:
   inside_vote_ratio: 0.5
 
 rules:
-  # safe_left_open / cash_room_door_open need a state classifier for the safe/door crop: zero-shot
-  # detection cannot tell open from closed on this footage, so they are off until a few-shot probe is trained.
-  enabled: [workstation_unlocked, valuables_left_unattended, unauthorized_entry, cash_exposed_to_visitor]
-  door_state_trusted: false   # the zero-shot door_open detection fires on a closed door; keep the "door was open" branch off
+  # cash_room_door_open and the "door was open" branch of unauthorized_entry stay off until the door classifier is verified.
+  enabled: [workstation_unlocked, valuables_left_unattended, safe_left_open, unauthorized_entry, cash_exposed_to_visitor]
+  door_state_trusted: false
   unattended_sec: 3
   safe_open_sec: 4
   door_open_sec: 4

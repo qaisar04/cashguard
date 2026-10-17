@@ -10,6 +10,8 @@ ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_CONFIG = ROOT / "config.yml"
 OBSERVER_DETECTOR = "detector"
 OBSERVER_STUB = "stub"
+EMBEDDING_GLOBAL = "global"
+EMBEDDING_SPATIAL = "spatial"
 
 
 class VideoConfig(BaseModel):
@@ -33,9 +35,34 @@ class ScreenConfig(BaseModel):
     min_luminance: float = Field(ge=0, le=255)
     panel_fraction: float = Field(gt=0, le=1, default=1.0)
     prototypes: Path | None = None
+    embedding: str = Field(default=EMBEDDING_GLOBAL, pattern=f"^({EMBEDDING_GLOBAL}|{EMBEDDING_SPATIAL})$")
     knn_k: int = Field(ge=1, default=5)
     min_similarity: float = Field(ge=0, le=1, default=0.0)
     prompts: dict[str, list[str]]
+
+
+class AnchorConfig(BaseModel):
+    """Where a static object (safe, door) is in the frame: OWLv2 median box over the video, else a fixed normalized box."""
+
+    queries: list[str] = Field(default_factory=list)
+    score_threshold: float = Field(ge=0, le=1, default=0.15)
+    stride: int = Field(ge=1, default=5, description="every n-th sampled frame is searched")
+    min_hits: int = Field(ge=1, default=3)
+    min_similarity: float = Field(ge=0, le=1, default=0.0, description="candidate crops less similar to the prototypes are look-alikes")
+    pad: float = Field(ge=0, default=0.0, description="crop margin as a fraction of the detected box size")
+    fallback_box: list[float] = Field(min_length=4, max_length=4)
+
+
+class StateConfig(BaseModel):
+    """Few-shot open/closed classifier of a static crop (safe, door)."""
+
+    enabled: bool = True
+    prototypes: Path
+    embedding: str = Field(default=EMBEDDING_SPATIAL, pattern=f"^({EMBEDDING_GLOBAL}|{EMBEDDING_SPATIAL})$")
+    knn_k: int = Field(ge=1, default=1)
+    min_similarity: float = Field(ge=0, le=1, default=0.0)
+    smooth_frames: int = Field(ge=1, default=1, description="odd window of a per-frame majority vote")
+    anchor: AnchorConfig
 
 
 class ZonesConfig(BaseModel):
@@ -83,6 +110,8 @@ class PipelineConfig(BaseModel):
     video: VideoConfig
     detectors: list[DetectorConfig] = Field(min_length=1)
     screen: ScreenConfig
+    safe: StateConfig
+    door: StateConfig
     person_verifier: PersonVerifierConfig
     zones: ZonesConfig
     tracking: TrackingConfig
