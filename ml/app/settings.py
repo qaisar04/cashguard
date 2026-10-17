@@ -38,12 +38,20 @@ class ScreenConfig(BaseModel):
     prompts: dict[str, list[str]]
 
 
+class GlassDetectionConfig(BaseModel):
+    enabled: bool = True
+    min_frames: int = Field(ge=1, default=3, description="frames with a detected glass pane before detections replace the polygons")
+    edge_pane_max_fraction: float = Field(gt=0, le=1, default=0.75, description="a pane at the frame edge narrower than this share of the glazing is the reflection strip")
+    pad: float = Field(ge=0, le=0.2, default=0.02)
+
+
 class ZonesConfig(BaseModel):
     cashier_radius: float = Field(gt=0)
     desk_radius: float = Field(gt=0)
     safe_radius: float = Field(gt=0)
     door: list[list[float]] = Field(min_length=3)
     glass: list[list[float]] = Field(min_length=3)
+    glass_detection: GlassDetectionConfig = Field(default_factory=GlassDetectionConfig)
 
 
 class TrackingConfig(BaseModel):
