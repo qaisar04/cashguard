@@ -19,7 +19,7 @@ def main() -> None:
     if cfg.vlm.enabled:
         models.append(cfg.vlm.model)
     for model in models:
-        path = snapshot_download(model, cache_dir=args.cache_dir, allow_patterns=["*.json", "*.txt", "*.safetensors", "*.jinja"])
+        path = snapshot_download(model, cache_dir=args.cache_dir, allow_patterns=["*.json", "*.txt", "*.safetensors", "*.jinja", "pytorch_model.bin"])
         print(f"{model} -> {path}")
 
 

@@ -1,6 +1,6 @@
 FROM python:3.12-slim
 
-ENV PIP_NO_CACHE_DIR=1 PYTHONUNBUFFERED=1 HF_HOME=/weights
+ENV PIP_NO_CACHE_DIR=1 PYTHONUNBUFFERED=1 HF_HOME=/weights HF_ENDPOINT=https://hf-mirror.com
 WORKDIR /srv
 
 COPY pyproject.toml ./
@@ -8,6 +8,7 @@ COPY app ./app
 COPY pipeline ./pipeline
 COPY rules ./rules
 COPY scripts ./scripts
+COPY prototypes ./prototypes
 COPY config.yml ./
 
 RUN pip install --extra-index-url https://download.pytorch.org/whl/cpu -e .
